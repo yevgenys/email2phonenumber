@@ -668,18 +668,16 @@ def setProxyList():
         proxyList.append({proxyUnformatted[:separatorPosition]: proxyUnformatted[separatorPosition + 3:]})
 
 
-if __name__ == '__main__':
+def parse_arguments():
     parser = argparse.ArgumentParser(description='An OSINT tool to find phone numbers associated to email addresses')
     subparsers = parser.add_subparsers(help='commands', dest='action')
     subparsers.required = True  # python3 compatibility
-
     scrape_parser = subparsers.add_parser('scrape', help='scrape online services for phone number digits')
     scrape_parser.add_argument("-e", required=True, metavar="EMAIL", dest="email", help="victim's email address")
     scrape_parser.add_argument("-p", metavar="PROXYLIST", dest="proxies",
                                help="a file with a list of https proxies to use. Format: https://127.0.0.1:8080")
     scrape_parser.add_argument("-q", dest="quiet", action="store_true",
                                help="scrape services that do not alert the victim")
-
     generator_parser = subparsers.add_parser('generate',
                                              help="generate all valid phone numbers based on NANPA's public records")
     generator_parser.add_argument("-m", required=True, metavar="MASK", dest="mask",
@@ -689,7 +687,6 @@ if __name__ == '__main__':
                                   help="use services that do not alert the victim")
     generator_parser.add_argument("-p", metavar="PROXYLIST", dest="proxies",
                                   help="a file with a list of https proxies to use. Format: https://127.0.0.1:8080")
-
     bruteforce_parser = subparsers.add_parser('bruteforce',
                                               help='bruteforce using online services to find the phone number')
     bruteforce_parser.add_argument("-e", required=True, metavar="EMAIL", dest="email", help="victim's email address")
@@ -701,8 +698,11 @@ if __name__ == '__main__':
     bruteforce_parser.add_argument("-q", dest="quiet", action="store_true",
                                    help="use services that do not alert the victim")
     bruteforce_parser.add_argument("-v", dest="verbose", action="store_true", help="verbose output")
+    return parser.parse_args()
 
-    args = parser.parse_args()
+
+if __name__ == '__main__':
+    args = parse_arguments()
 
     if args.action == "scrape":
         if args.proxies:
