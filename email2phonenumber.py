@@ -4,7 +4,6 @@ import argparse
 import os
 import random
 import re
-import sys
 import time
 import urllib
 import zipfile
@@ -701,62 +700,62 @@ def parse_arguments():
     return parser.parse_args()
 
 
+def scrape(args):
+    if args.proxies:
+        setProxyList()
+    startScraping(args.email, args.quiet)
+
+
+def generate(args):
+    if not re.match("^[0-9X]{10}", args.mask):
+        exit(RED + "You need to pass a US phone number masked as in: 555XXX1234" + ENDC)
+    if args.proxies:
+        setProxyList()
+    possiblePhoneNumbers = getPossiblePhoneNumbers(args.mask)
+    if args.file:
+        with open(args.file, 'w') as f:
+            f.write('\n'.join(possiblePhoneNumbers))
+        print(GREEN + "Dictionary created successfully at " + os.path.realpath(f.name) + ENDC)
+        f.close()
+
+    else:
+        print(GREEN + "There are " + str(len(possiblePhoneNumbers)) + " possible numbers" + ENDC)
+        print(GREEN + str(possiblePhoneNumbers) + ENDC)
+
+
+def brutforce(args):
+    if args.email and not re.match(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", args.email):
+        exit(RED + "Email is invalid" + ENDC)
+    if (args.mask and args.file) or (not args.mask and not args.file):
+        exit(RED + "You need to provide a masked number or a file with numbers to try" + ENDC)
+    if args.mask and not re.match("^[0-9X]{10}", args.mask): exit(
+        RED + "You need to pass a 10-digit US phone number masked as in: 555XXX1234" + ENDC)
+    if args.file and not os.path.isfile(args.file): exit(RED + "You need to pass a valid file path" + ENDC)
+    print("Looking for the phone number associated to " + args.email + "...")
+    if args.mask:
+        possiblePhoneNumbers = getPossiblePhoneNumbers(args.mask)
+    else:
+        f = open(args.file, "r")
+        if not f.mode == 'r':
+            f.close()
+            exit(RED + "Could not read file " + args.file + ENDC)
+        fileContent = f.read()
+        fileContent = filter(None, fileContent)  # Remove last \n if needed
+        possiblePhoneNumbers = fileContent.split("\n")
+        f.close()
+    if args.proxies:
+        setProxyList()
+    startBruteforcing(possiblePhoneNumbers, args.email, args.quiet, args.verbose)
+
+
 if __name__ == '__main__':
     args = parse_arguments()
 
     if args.action == "scrape":
-        if args.proxies:
-            setProxyList()
-
-        startScraping(args.email, args.quiet)
-
+        scrape(args)
     elif args.action == "generate":
-        if not re.match("^[0-9X]{10}", args.mask):
-            exit(RED + "You need to pass a US phone number masked as in: 555XXX1234" + ENDC)
-
-        if args.proxies:
-            setProxyList()
-
-        possiblePhoneNumbers = getPossiblePhoneNumbers(args.mask)
-        if args.file:
-            with open(args.file, 'w') as f:
-                f.write('\n'.join(possiblePhoneNumbers))
-            print(GREEN + "Dictionary created successfully at " + os.path.realpath(f.name) + ENDC)
-            f.close()
-
-        else:
-            print(GREEN + "There are " + str(len(possiblePhoneNumbers)) + " possible numbers" + ENDC)
-            print(GREEN + str(possiblePhoneNumbers) + ENDC)
-
+        generate(args)
     elif args.action == "bruteforce":
-        if args.email and not re.match(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", args.email):
-            exit(RED + "Email is invalid" + ENDC)
-
-        if (args.mask and args.file) or (not args.mask and not args.file):
-            exit(RED + "You need to provide a masked number or a file with numbers to try" + ENDC)
-
-        if args.mask and not re.match("^[0-9X]{10}", args.mask): exit(
-            RED + "You need to pass a 10-digit US phone number masked as in: 555XXX1234" + ENDC)
-        if args.file and not os.path.isfile(args.file): exit(RED + "You need to pass a valid file path" + ENDC)
-
-        print("Looking for the phone number associated to " + args.email + "...")
-        if args.mask:
-            possiblePhoneNumbers = getPossiblePhoneNumbers(args.mask)
-        else:
-            f = open(args.file, "r")
-            if not f.mode == 'r':
-                f.close()
-                exit(RED + "Could not read file " + args.file + ENDC)
-            fileContent = f.read()
-            fileContent = filter(None, fileContent)  # Remove last \n if needed
-            possiblePhoneNumbers = fileContent.split("\n")
-            f.close()
-
-        if args.proxies:
-            setProxyList()
-
-        startBruteforcing(possiblePhoneNumbers, args.email, args.quiet, args.verbose)
-
-
+        brutforce(args)
     else:
         exit(RED + "action not recognized" + ENDC)
