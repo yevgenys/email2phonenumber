@@ -670,7 +670,7 @@ def setProxyList():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='An OSINT tool to find phone numbers associated to email addresses')
-    subparsers = parser.add_subparsers(help='commands', dest='subparsers')
+    subparsers = parser.add_subparsers(help='commands', dest='action')
     subparsers.required = True  # python3 compatibility
 
     scrape_parser = subparsers.add_parser('scrape', help='scrape online services for phone number digits')
@@ -703,15 +703,14 @@ if __name__ == '__main__':
     bruteforce_parser.add_argument("-v", dest="verbose", action="store_true", help="verbose output")
 
     args = parser.parse_args()
-    action = sys.argv[1]
 
-    if action == "scrape":
+    if args.action == "scrape":
         if args.proxies:
             setProxyList()
 
         startScraping(args.email, args.quiet)
 
-    elif action == "generate":
+    elif args.action == "generate":
         if not re.match("^[0-9X]{10}", args.mask):
             exit(RED + "You need to pass a US phone number masked as in: 555XXX1234" + ENDC)
 
@@ -729,7 +728,7 @@ if __name__ == '__main__':
             print(GREEN + "There are " + str(len(possiblePhoneNumbers)) + " possible numbers" + ENDC)
             print(GREEN + str(possiblePhoneNumbers) + ENDC)
 
-    elif action == "bruteforce":
+    elif args.action == "bruteforce":
         if args.email and not re.match(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", args.email):
             exit(RED + "Email is invalid" + ENDC)
 
