@@ -12,7 +12,7 @@ from itertools import product
 import requests
 from bs4 import BeautifulSoup
 
-from globals import YELLOW, ENDC, RED, GREEN
+from globals import YELLOW, ENDC, RED, GREEN, Actions
 from settings import verifyProxy
 
 requests.packages.urllib3.disable_warnings()
@@ -671,13 +671,13 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='An OSINT tool to find phone numbers associated to email addresses')
     subparsers = parser.add_subparsers(help='commands', dest='action')
     subparsers.required = True  # python3 compatibility, will generate slightly different error massage then python2
-    scrape_parser = subparsers.add_parser('scrape', help='scrape online services for phone number digits')
+    scrape_parser = subparsers.add_parser(Actions.SCRAPE, help='scrape online services for phone number digits')
     scrape_parser.add_argument("-e", required=True, metavar="EMAIL", dest="email", help="victim's email address")
     scrape_parser.add_argument("-p", metavar="PROXYLIST", dest="proxies",
                                help="a file with a list of https proxies to use. Format: https://127.0.0.1:8080")
     scrape_parser.add_argument("-q", dest="quiet", action="store_true",
                                help="scrape services that do not alert the victim")
-    generator_parser = subparsers.add_parser('generate',
+    generator_parser = subparsers.add_parser(Actions.GENERATE,
                                              help="generate all valid phone numbers based on NANPA's public records")
     generator_parser.add_argument("-m", required=True, metavar="MASK", dest="mask",
                                   help="a masked 10-digit US phone number as in: 555XXX1234")
@@ -686,7 +686,7 @@ def parse_arguments():
                                   help="use services that do not alert the victim")
     generator_parser.add_argument("-p", metavar="PROXYLIST", dest="proxies",
                                   help="a file with a list of https proxies to use. Format: https://127.0.0.1:8080")
-    bruteforce_parser = subparsers.add_parser('bruteforce',
+    bruteforce_parser = subparsers.add_parser(Actions.BRUTE_FORCE,
                                               help='bruteforce using online services to find the phone number')
     bruteforce_parser.add_argument("-e", required=True, metavar="EMAIL", dest="email", help="victim's email address")
     bruteforce_parser.add_argument("-m", metavar="MASK", dest="mask",
@@ -700,17 +700,9 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def scrape(args):
-    if args.proxies:
-        setProxyList()
-    startScraping(args.email, args.quiet)
-
-
 def generate(args):
     if not re.match("^[0-9X]{10}", args.mask):
         exit(RED + "You need to pass a US phone number masked as in: 555XXX1234" + ENDC)
-    if args.proxies:
-        setProxyList()
     possiblePhoneNumbers = getPossiblePhoneNumbers(args.mask)
     if args.file:
         with open(args.file, 'w') as f:
@@ -743,19 +735,19 @@ def brutforce(args):
         fileContent = filter(None, fileContent)  # Remove last \n if needed
         possiblePhoneNumbers = fileContent.split("\n")
         f.close()
-    if args.proxies:
-        setProxyList()
     startBruteforcing(possiblePhoneNumbers, args.email, args.quiet, args.verbose)
 
 
 if __name__ == '__main__':
     args = parse_arguments()
+    if args.proxies:
+        setProxyList()
 
-    if args.action == "scrape":
-        scrape(args)
-    elif args.action == "generate":
+    if args.action == Actions.SCRAPE:
+        startScraping(args.email, args.quiet)
+    elif args.action == Actions.GENERATE:
         generate(args)
-    elif args.action == "bruteforce":
+    elif args.action == Actions.BRUTE_FORCE:
         brutforce(args)
     else:
         exit(RED + "action not recognized" + ENDC)
