@@ -14,20 +14,13 @@ from bs4 import BeautifulSoup
 
 from core.proxy import Proxy
 from globals import YELLOW, ENDC, RED, GREEN, Actions
+from scrapers.ebay import Ebay
+from scrapers.lastpass import LastPass
+from scrapers.paypal import PayPal
 from settings import verifyProxy
+from user_agents import UserAgentsCycle
 
 requests.packages.urllib3.disable_warnings()
-
-userAgents = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36",
-    "Opera/9.80 (J2ME/MIDP; Opera Mini/7.1.32052/29.3417; U; en) Presto/2.8.119 Version/11.10",
-    "Mozilla/5.0 (Windows NT 5.1; rv:34.0) Gecko/20100101 Firefox/34.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 11_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.0 Mobile/15E148 Safari/604.1",
-    "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko",
-    "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0)",
-    "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.65 Safari/537.36"]
-
 poolingCache = {}  # To cache results from nationalpooling website and save bandwith
 
 
@@ -286,16 +279,21 @@ def getMaskedEmailWithTwitter(phoneNumbers, victimEmail, verbose):
 
 
 ############ SCRAPERS ############
-def startScraping(email, quietMode):
-    print("Starting scraping online services...")
-    if quietMode:
-        scrapePaypal(email)
-    else:
-        scrapeEbay(email)
-        scrapeLastpass(email)
+def start_scraping(email, quiet_mode):
+    scrapers = initialize_scrapers(email, quiet_mode)
+    for scraper in scrapers:
+        scraper.scrape()
 
 
-# scrapePaypal(email)
+def initialize_scrapers(email, quiet_mode):
+    if quiet_mode:
+        return [
+            PayPal(email)
+        ]
+    return [
+        Ebay(email),
+        LastPass(email)
+    ]
 
 
 def scrapeLastpass(email):
@@ -713,9 +711,10 @@ def brutforce(args):
 if __name__ == '__main__':
     args = parse_arguments()
     proxy_instance = Proxy(args.proxies)
+    user_agents_instance = UserAgentsCycle()
 
-    # if args.action == Actions.SCRAPE:
-    #     startScraping(args.email, args.quiet)
+    if args.action == Actions.SCRAPE:
+        start_scraping(args.email, args.quiet)
     # elif args.action == Actions.GENERATE:
     #     generate(args)
     # elif args.action == Actions.BRUTE_FORCE:
