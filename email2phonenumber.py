@@ -671,7 +671,7 @@ def setProxyList():
 def parse_arguments():
     parser = argparse.ArgumentParser(description='An OSINT tool to find phone numbers associated to email addresses')
     subparsers = parser.add_subparsers(help='commands', dest='action')
-    subparsers.required = True  # python3 compatibility
+    subparsers.required = True  # python3 compatibility, will generate slightly different error massage then python2
     scrape_parser = subparsers.add_parser('scrape', help='scrape online services for phone number digits')
     scrape_parser.add_argument("-e", required=True, metavar="EMAIL", dest="email", help="victim's email address")
     scrape_parser.add_argument("-p", metavar="PROXYLIST", dest="proxies",
