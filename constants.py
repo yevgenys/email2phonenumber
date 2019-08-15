@@ -1,11 +1,14 @@
 from colorama import init, Fore, Style
 
-init()
+class Colors(object):
 
-GREEN = Fore.LIGHTGREEN_EX
-YELLOW = Fore.LIGHTYELLOW_EX
-RED = Fore.LIGHTRED_EX
-ENDC = Style.RESET_ALL
+    def __init__(self):
+        init()
+    
+        self.GREEN = Fore.LIGHTGREEN_EX
+        self.YELLOW = Fore.LIGHTYELLOW_EX
+        self.RED = Fore.LIGHTRED_EX
+        self.ENDC = Style.RESET_ALL
 
 
 class Actions(object):

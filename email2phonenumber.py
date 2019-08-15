@@ -8,7 +8,7 @@ import requests
 import urllib
 
 
-from constants import YELLOW, ENDC, RED, GREEN, Actions
+from constants import Colors, Actions
 from settings import Settings
 from core.proxy import Proxy
 from core.user_agents import UserAgentsCycle
@@ -174,12 +174,12 @@ def get_masked_email_with_amazon(phone_numbers, victim_email, verbose):
             else:
                 if verbose: print(YELLOW + "No match for email: " + maskedEmail + " and number: " + phoneNumber + ENDC)
         else:
-            print(RED + "Unknown error" + ENDC)
-            if verbose: print(RED + response.text + ENDC)
+            print(colors.RED + "Unknown error" + ENDC)
+            if verbose: print(colors.RED + response.text + ENDC)
             exit("Unknown error!")
 
     if not possible_number_found:
-        print(RED + "Couldn't find a phone number associated to " + args.email + ENDC)
+        print(colors.RED + "Couldn't find a phone number associated to " + args.email + ENDC)
 
 
 # Uses Amazon to obtain masked email by resetting passwords using phone numbers
@@ -238,7 +238,7 @@ def getMaskedEmailWithTwitter(phoneNumbers, victimEmail, verbose):
         if "Location" in response.headers and response.headers[
             'Location'] == "https://twitter.com/account/password_reset_help?c=4":
             print(
-                        RED + "Twitter reports MAX attemtps reached. Need to change IP. It happened while trying phone " + phoneNumber + ENDC)
+                        colors.RED + "Twitter reports MAX attemtps reached. Need to change IP. It happened while trying phone " + phoneNumber + ENDC)
             continue
 
         response = session.get("https://twitter.com/account/send_password_reset",
@@ -273,7 +273,7 @@ def getMaskedEmailWithTwitter(phoneNumbers, victimEmail, verbose):
             continue
 
     if not possibleNumberFound:
-        print(RED + "Couldn't find a phone number associated to " + args.email + ENDC)
+        print(colors.RED + "Couldn't find a phone number associated to " + args.email + ENDC)
 
 
 def start_scraping(email, quiet_mode, user_agents_instance, proxy_instance):
@@ -330,12 +330,12 @@ def parse_arguments():
 
 def bruteforce(args):
     if args.email and not re.match(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", args.email):
-        exit(RED + "Email is invalid" + ENDC)
+        exit(colors.RED + "Email is invalid" + ENDC)
     if (args.mask and args.file) or (not args.mask and not args.file):
-        exit(RED + "You need to provide a masked number or a file with numbers to try" + ENDC)
+        exit(colors.RED + "You need to provide a masked number or a file with numbers to try" + ENDC)
     if args.mask and not re.match("^[0-9X]{10}", args.mask): exit(
-        RED + "You need to pass a 10-digit US phone number masked as in: 555XXX1234" + ENDC)
-    if args.file and not os.path.isfile(args.file): exit(RED + "You need to pass a valid file path" + ENDC)
+        colors.RED + "You need to pass a 10-digit US phone number masked as in: 555XXX1234" + ENDC)
+    if args.file and not os.path.isfile(args.file): exit(colors.RED + "You need to pass a valid file path" + ENDC)
     print("Looking for the phone number associated to " + args.email + "...")
     if args.mask:
         possiblePhoneNumbers = getPossiblePhoneNumbers(args.mask)
@@ -343,7 +343,7 @@ def bruteforce(args):
         f = open(args.file, "r")
         if not f.mode == 'r':
             f.close()
-            exit(RED + "Could not read file " + args.file + ENDC)
+            exit(colors.RED + "Could not read file " + args.file + ENDC)
         fileContent = f.read()
         fileContent = filter(None, fileContent)  # Remove last \n if needed
         possiblePhoneNumbers = fileContent.split("\n")
@@ -354,6 +354,7 @@ def bruteforce(args):
 if __name__ == '__main__':
     args = parse_arguments()
     settings = Settings(args)
+    colors = Colors()
     proxy_instance = Proxy(settings)
     user_agents_instance = UserAgentsCycle(settings)
     
@@ -361,9 +362,13 @@ if __name__ == '__main__':
     if args.action == Actions.SCRAPE:
         start_scraping(args.email, args.quiet, user_agents_instance, proxy_instance)
     elif args.action == Actions.GENERATE:        
-        generator = PhonenumberGenerator(settings, {}, user_agents_instance, proxy_instance)
+        generator = PhonenumberGenerator(settings, 
+                                         {}, 
+                                         user_agents_instance, 
+                                         proxy_instance,
+                                         colors)
         generator.generate(args)
     # elif args.action == Actions.BRUTE_FORCE:
     #     bruteforce(args)
     # else:
-    #     exit(RED + "action not recognized" + ENDC)
+    #     exit(colors.RED + "action not recognized" + ENDC)

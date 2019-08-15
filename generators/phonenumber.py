@@ -5,7 +5,6 @@ import time
 import zipfile
 from bs4 import BeautifulSoup
 from itertools import product
-from constants import GREEN, RED, ENDC
 
 class USPhoneNumberGenerator(object):
     def __init__(self, cache, user_agent_instance, proxy_instance, verify_proxy):
@@ -115,8 +114,9 @@ class USPhoneNumberGenerator(object):
 
 
 class PhonenumberGenerator(object):
-    def __init__(self, settings, cache, user_agent_instance, proxy_instance):
+    def __init__(self, settings, cache, user_agent_instance, proxy_instance, colors):
         self.region = settings.region
+        self.colors = colors
         self.map_region = {
             "US": USPhoneNumberGenerator(cache, user_agent_instance, proxy_instance, settings.verify_proxy)
         }
@@ -126,16 +126,16 @@ class PhonenumberGenerator(object):
     
     def generate(self, args):
         if not re.match("^[0-9X]{10}", args.mask):
-            exit(RED + "You need to pass a US phone number masked as in: 555XXX1234" + ENDC)
+            exit(self.colors.RED + "You need to pass a US phone number masked as in: 555XXX1234" + self.colors.ENDC)
         possiblePhoneNumbers = self.getPossiblePhoneNumbers(args.mask)
         if args.file:
             with open(args.file, 'w') as f:
                 f.write('\n'.join(possiblePhoneNumbers))
-            print(GREEN + "Dictionary created successfully at " + os.path.realpath(f.name) + ENDC)
+            print(self.colors.GREEN + "Dictionary created successfully at " + os.path.realpath(f.name) + self.colors.ENDC)
             f.close()
 
         else:
-            print(GREEN + "There are " + str(len(possiblePhoneNumbers)) + " possible numbers" + ENDC)
-            print(GREEN + str(possiblePhoneNumbers) + ENDC)
+            print(self.colors.GREEN + "There are " + str(len(possiblePhoneNumbers)) + " possible numbers" + self.colors.ENDC)
+            print(self.colors.GREEN + str(possiblePhoneNumbers) + self.colors.ENDC)
 
 
