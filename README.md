@@ -35,5 +35,9 @@ Find target's phone number by resetting passwords on websites that do not alert 
 ```
 python email2phonenumber.py bruteforce -m 555XXX1234 -e target@email.com -p /tmp/proxies.txt -q
 ```
+Find target's phone, in selected region; default region is US; for now other regions not supported.
+```
+python email2phonenumber.py bruteforce -m 555XXX1234 -e target@email.com -p /tmp/proxies.txt -q -r EU
+```
 ## Authors
 Martin Vigo - @martin_vigo - [martinvigo.com](https://www.martinvigo.com)
