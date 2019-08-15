@@ -4,19 +4,18 @@ import argparse
 import os
 import random
 import re
+import requests
 import urllib
 
-import requests
-from bs4 import BeautifulSoup
 
-from core.proxy import Proxy
 from constants import YELLOW, ENDC, RED, GREEN, Actions
+from settings import Settings
+from core.proxy import Proxy
+from core.user_agents import UserAgentsCycle
+from generators.phonenumber import PhonenumberGenerator
 from scrapers.ebay import Ebay
 from scrapers.lastpass import LastPass
 from scrapers.paypal import PayPal
-from settings import Settings
-from core.user_agents import UserAgentsCycle
-from generators.phonenumber import PhonenumberGenerator
 
 requests.packages.urllib3.disable_warnings()
 poolingCache = {}  # To cache results from nationalpooling website and save bandwith
