@@ -1,14 +1,13 @@
 import random
 
-from constants import RED, ENDC
-
 
 class Proxy(object):
-    def __init__(self, settings):
+    def __init__(self, settings, colors):
         self._file_path = settings.path_to_proxy_file
         self._parsed_proxies = []
         self._parsed = False
         self._verify_proxy = settings.verify_proxy
+        self.colors = colors
 
     @property
     def verify_proxy(self):
@@ -28,7 +27,8 @@ class Proxy(object):
             if self._file_path:
                 with open(self._file_path, "r") as f:
                     file_content = f.read()
-                    file_content = filter(None, file_content)  # Remove last \n if needed
+                    file_content = filter(None, file_content)
+                    file_content = "".join(list(file_content))
                     proxy_list_unformatted = file_content.split("\n")
                     for proxy_unformatted in proxy_list_unformatted:
                         separator_position = proxy_unformatted.find("://")
@@ -37,4 +37,4 @@ class Proxy(object):
 
             self._parsed = True
         except Exception as e:
-            exit(RED + "{}Could not read file {};\nException: {}{}".format(RED, self._file_path, str(e), ENDC))
+            exit(self.colors.RED + "{}Could not read file {};\nException: {}{}".format(self.colors.RED, self._file_path, str(e), self.colors.ENDC))

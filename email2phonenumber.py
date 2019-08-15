@@ -362,7 +362,7 @@ if __name__ == '__main__':
     args = parse_arguments()
     settings = Settings(args)
     colors = Colors()
-    proxy_instance = Proxy(settings)
+    proxy_instance = Proxy(settings, colors)
     user_agents_instance = UserAgentsCycle(settings)
     
 

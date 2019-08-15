@@ -9,4 +9,4 @@ class Settings:
         self.verify_proxy = False
         self.root_dir = os.path.dirname(os.path.realpath(__file__))
         self.region = parsed_args.region if 'region' in parsed_args else 'US'
-        self.path_to_proxy_file = parsed_args.proxies
+        self.path_to_proxy_file = parsed_args.proxies if parsed_args.proxies else f'{self.root_dir}/core/proxies.ini'
