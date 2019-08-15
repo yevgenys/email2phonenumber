@@ -2,7 +2,7 @@ import re
 
 import requests
 
-from globals import YELLOW, ENDC, GREEN
+from constants import YELLOW, ENDC, GREEN
 from scrapers import Scraper
 
 

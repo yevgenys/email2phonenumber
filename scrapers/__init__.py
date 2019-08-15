@@ -3,7 +3,7 @@ import abc
 
 class Scraper(object):
     """
-    paren for all scrapers
+    parent for all scrapers
     """
     def __init__(self, email, user_agents, proxy):
         self.email = email
