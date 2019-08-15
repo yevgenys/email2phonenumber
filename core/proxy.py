@@ -4,10 +4,15 @@ from globals import RED, ENDC
 
 
 class Proxy(object):
-    def __init__(self, path_to_proxy_file):
+    def __init__(self, path_to_proxy_file, settings):
         self._file_path = path_to_proxy_file
         self._parsed_proxies = []
         self._parsed = False
+        self._verify_proxy = settings.verifyProxy
+
+    @property
+    def verify_proxy(self):
+        return self._verify_proxy
 
     def get_random_proxy(self):
         if not self._parsed:

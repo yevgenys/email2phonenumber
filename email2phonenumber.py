@@ -17,11 +17,12 @@ from globals import YELLOW, ENDC, RED, GREEN, Actions
 from scrapers.ebay import Ebay
 from scrapers.lastpass import LastPass
 from scrapers.paypal import PayPal
-from settings import verifyProxy
-from user_agents import UserAgentsCycle
+from settings import Settings
+from core.user_agents import UserAgentsCycle
 
 requests.packages.urllib3.disable_warnings()
 poolingCache = {}  # To cache results from nationalpooling website and save bandwith
+verifyProxy = False
 
 
 ############ BRUTEFORCERS ############
@@ -278,254 +279,22 @@ def getMaskedEmailWithTwitter(phoneNumbers, victimEmail, verbose):
         print(RED + "Couldn't find a phone number associated to " + args.email + ENDC)
 
 
-############ SCRAPERS ############
-def start_scraping(email, quiet_mode):
-    scrapers = initialize_scrapers(email, quiet_mode)
+def start_scraping(email, quiet_mode, user_agents_instance ,proxy_instance):
+    scrapers = get_scrapers(email, quiet_mode, user_agents_instance, proxy_instance)
     for scraper in scrapers:
         scraper.scrape()
 
 
-def initialize_scrapers(email, quiet_mode):
+def get_scrapers(email, quiet_mode, user_agents_instance, proxy_instance):
+    scraper_parameters = dict(email=email, user_agents=user_agents_instance, proxy=proxy_instance)
     if quiet_mode:
         return [
-            PayPal(email)
+            PayPal(**scraper_parameters)
         ]
     return [
-        Ebay(email),
-        LastPass(email)
+        Ebay(**scraper_parameters),
+        LastPass(**scraper_parameters)
     ]
-
-
-def scrapeLastpass(email):
-    global userAgents
-
-    print("Scraping Lastpass...")
-    userAgent = random.choice(userAgents)
-    proxy = proxy_instance.get_random_proxy()
-    session = requests.Session()
-    response = session.get("https://lastpass.com/recover.php",
-                           headers={"Upgrade-Insecure-Requests": "1",
-                                    "User-Agent": userAgent,
-                                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
-                                    "Accept-Encoding": "gzip, deflate",
-                                    "Accept-Language": "en-US,en;q=0.9",
-                                    },
-                           proxies=proxy,
-                           verify=verifyProxy)
-
-    csrfToken = re.search('<input type="hidden" name="token" value="(.+?)">', response.text).group(1)
-
-    response = session.post("https://lastpass.com/recover.php",
-                            headers={"Cache-Control": "max-age=0",
-                                     "Origin": "https://lastpass.com",
-                                     "Upgrade-Insecure-Requests": "1",
-                                     "Content-Type": "application/x-www-form-urlencoded",
-                                     "User-Agent": userAgent,
-                                     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
-                                     "Referer": "https://lastpass.com/",
-                                     "Accept-Encoding": "gzip, deflate",
-                                     "Accept-Language": "en-US,en;q=0.9",
-                                     },
-                            data="cmd=sendemail" +
-                                 "&token=" + csrfToken +
-                                 "&username=" + email,
-                            proxies=proxy,
-                            verify=verifyProxy)
-
-    last2 = ""
-    regexOutput = re.search("We sent an SMS with a verification code to .*>(\+?)(.+([0-9]{2}))<\/strong>",
-                            response.text)
-    if regexOutput and regexOutput.group(3):
-        last2 = regexOutput.group(3)
-        print(GREEN + "Lastpass reports that the last 2 digits are: " + last2 + ENDC)
-
-        if regexOutput.group(1):
-            print(GREEN + "Lastpass reports a non US phone number" + ENDC)
-            print(GREEN + "Lastpass reports that the length of the phone number (including country code) is " + str(len(regexOutput.group(2).replace("-", ""))) + " digits" + ENDC)
-        else:
-            print(GREEN + "Lastpass reports a US phone number" + ENDC)
-            print(GREEN + "Lastpass reports that the length of the phone number (without country code) is " + str(
-                len(regexOutput.group(2).replace("-", ""))) + " digits" + ENDC)
-    else:
-        print(YELLOW + "Lastpass did not report any digits" + ENDC)
-
-
-def scrapeEbay(email):
-    global userAgents
-    print("Scraping Ebay...")
-    userAgent = random.choice(userAgents)
-    proxy = proxy_instance.get_random_proxy()
-
-    session = requests.Session()
-    response = session.get(
-        "https://fyp.ebay.com/EnterUserInfo?ru=https%3A%2F%2Fwww.ebay.com%2F&gchru=&clientapptype=19&rmvhdr=false",
-        headers={"Upgrade-Insecure-Requests": "1",
-                 "User-Agent": userAgent,
-                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
-                 "Accept-Encoding": "gzip, deflate",
-                 "Accept-Language": "en-US,en;q=0.9",
-                 },
-        proxies=proxy,
-        verify=verifyProxy)
-
-    reqinput = ""
-    regexOutput = re.search('value="(\w{60,})"', response.text)
-    if regexOutput and regexOutput.group(1):
-        reqinput = regexOutput.group(1)
-    else:
-        print(YELLOW + "Ebay did not report any digits" + ENDC)
-        return
-
-    response = session.post(
-        "https://fyp.ebay.com/EnterUserInfo?ru=https%3A%2F%2Fwww.ebay.com%2F&gchru=&clientapptype=19&rmvhdr=false",
-        headers={"Cache-Control": "max-age=0",
-                 "Origin": "https://fyp.ebay.com",
-                 "Upgrade-Insecure-Requests": "1",
-                 "Content-Type": "application/x-www-form-urlencoded",
-                 "User-Agent": userAgent,
-                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
-                 "Referer": "https://fyp.ebay.com/EnterUserInfo?ru=https%3A%2F%2Fwww.ebay.com%2F&clientapptype=19&signInUrl=https%3A%2F%2Fwww.ebay.com%2Fsignin%3Ffyp%3Dsgn%26siteid%3D0%26co_partnerId%3D0%26ru%3Dhttps%253A%252F%252Fwww.ebay.com%252F&otpFyp=1",
-                 "Accept-Encoding": "gzip, deflate",
-                 "Accept-Language": "en-US,en;q=0.9",
-                 },
-        data="ru=https%253A%252F%252Fwww.ebay.com%252F" +
-             "&showSignInOTP=" +
-             "&signInUrl=" +
-             "&clientapptype=19" +
-             "&reqinput=" + reqinput +
-             "&rmvhdr=false" +
-             "&gchru=&__HPAB_token_text__=" +
-             "&__HPAB_token_string__=" +
-             "&pageType=" +
-             "&input=" + email,
-        proxies=proxy,
-        verify=verifyProxy)
-
-    first1 = ""
-    last2 = ""
-    regexOutput = re.search("text you at ([0-9]{1})xx-xxx-xx([0-9]{2})", response.text)
-    if regexOutput:
-        if regexOutput.group(1):
-            first1 = regexOutput.group(1)
-            print(GREEN + "Ebay reports that the first digit is: " + first1 + ENDC)
-        if regexOutput.group(2):
-            last2 = regexOutput.group(2)
-            print(GREEN + "Ebay reports that the last 2 digits are: " + last2 + ENDC)
-    else:
-        print(YELLOW + "Ebay did not report any digits" + ENDC)
-
-
-def scrapePaypal(email):
-    global userAgents
-
-    print("Scraping Paypal...")
-    userAgent = random.choice(userAgents)
-    proxy = proxy_instance.get_random_proxy()
-
-    session = requests.Session()
-    response = session.get("https://www.paypal.com/authflow/password-recovery/",
-                           headers={"Upgrade-Insecure-Requests": "1",
-                                    "User-Agent": userAgent,
-                                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
-                                    "Accept-Encoding": "gzip, deflate",
-                                    "Accept-Language": "en-US,en;q=0.9",
-                                    },
-                           proxies=proxy,
-                           verify=verifyProxy)
-
-    _csrf = ""
-    regexOutput = re.search('"_csrf":"([a-zA-Z0-9+\/]+={0,3})"', response.text)
-    if regexOutput and regexOutput.group(1):
-        _csrf = regexOutput.group(1)
-    else:
-        print(YELLOW + "Paypal did not report any digits" + ENDC)
-        return
-
-    response = session.post("https://www.paypal.com/authflow/password-recovery",
-                            headers={"Upgrade-Insecure-Requests": "1",
-                                     "Origin": "https://www.paypal.com",
-                                     "X-Requested-With": "XMLHttpRequest",
-                                     "User-Agent": userAgent,
-                                     "Accept": "*/*",
-                                     "Referer": "https://www.paypal.com/authflow/password-recovery/",
-                                     "Accept-Encoding": "gzip, deflate",
-                                     "Accept-Language": "en-US,en;q=0.9",
-                                     },
-                            data="email=" + email +
-                                 "&_csrf=" + _csrf,
-                            proxies=proxy,
-                            verify=verifyProxy)
-
-    _csrf = _sessionID = jse = ""
-    regexOutput = re.search('"_csrf":"([a-zA-Z0-9+\/]+={0,3})"', response.text)
-    if regexOutput and regexOutput.group(1): _csrf = regexOutput.group(1)
-
-    regexOutput = re.search('_sessionID" value="(\w+)"', response.text)
-    if regexOutput and regexOutput.group(1): _sessionID = regexOutput.group(1)
-
-    regexOutput = re.search('jse="(\w+)"', response.text)
-    if regexOutput and regexOutput.group(1): jse = regexOutput.group(1)
-
-    if not _csrf or not _sessionID or not jse:
-        print(YELLOW + "Paypal did not report any digits" + ENDC)
-        return
-
-    response = session.post("https://www.paypal.com/auth/validatecaptcha",
-                            headers={"Upgrade-Insecure-Requests": "1",
-                                     "Origin": "https://www.paypal.com",
-                                     "X-Requested-With": "XMLHttpRequest",
-                                     "User-Agent": userAgent,
-                                     "Content-Type": "application/x-www-form-urlencoded",
-                                     "Accept": "*/*",
-                                     "Referer": "https://www.paypal.com/authflow/password-recovery/",
-                                     "Accept-Encoding": "gzip, deflate",
-                                     "Accept-Language": "en-US,en;q=0.9",
-                                     },
-                            data="captcha=" +
-                                 "&_csrf=" + _csrf +
-                                 "&_sessionID=" + _sessionID +
-                                 "&jse=" + jse +
-                                 "&ads_token_js=b2c9ad327f5fa65af5a0a0a4cfa912d5cadf0f593027afffadd959390753d44d" +
-                                 "&afbacc5007731416=2e21541bb2d5470b",  # TODO
-                            proxies=proxy,
-                            verify=verifyProxy)
-
-    clientInstanceId = ""
-    regexOutput = re.search('"clientInstanceId":"([a-zA-Z0-9-]+)"', response.text)
-    if regexOutput and regexOutput.group(1):
-        clientInstanceId = regexOutput.group(1)
-    else:
-        YELLOW + "Paypal did not report any digits" + ENDC
-        return
-
-    response = session.get("https://www.paypal.com/authflow/entry/?clientInstanceId=" + clientInstanceId,
-                           headers={"Upgrade-Insecure-Requests": "1",
-                                    "User-Agent": userAgent,
-                                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
-                                    "Referer": "https://www.paypal.com/authflow/password-recovery/",
-                                    "Accept-Encoding": "gzip, deflate",
-                                    "Accept-Language": "en-US,en;q=0.9",
-                                    },
-                           proxies=proxy,
-                           verify=verifyProxy)
-
-    lastDigits = ""
-    regexOutput = re.search("Mobile <span.+((\d+)\W+(\d+))<\/span>", response.text)
-    if regexOutput and regexOutput.group(3):
-        last4 = regexOutput.group(3)
-        print(GREEN + "Pyapal reports that the last " + len(regexOutput.group(3)) + " digits are: " + lastDigits + ENDC)
-
-        if regexOutput.group(2):
-            firstDigit = regexOutput.group(2)
-            print(GREEN + "Paypal reports that the first digit is: " + regexOutput.group(2) + ENDC)
-
-        if regexOutput.group(1):
-            print(GREEN + "Paypal reports that the length of the phone number (without country code) is " + len(
-                regexOutput.group(1)) + " digits" + ENDC)  # TODO: remove spaces
-
-    else:
-        print(YELLOW + "Paypal did not report any digits" + ENDC)
-
 
 ############ GENERATORS ############
 
@@ -710,11 +479,12 @@ def brutforce(args):
 
 if __name__ == '__main__':
     args = parse_arguments()
-    proxy_instance = Proxy(args.proxies)
-    user_agents_instance = UserAgentsCycle()
+    settings = Settings()
+    proxy_instance = Proxy(args.proxies, settings)
+    user_agents_instance = UserAgentsCycle(settings)
 
     if args.action == Actions.SCRAPE:
-        start_scraping(args.email, args.quiet)
+        start_scraping(args.email, args.quiet, user_agents_instance, proxy_instance)
     # elif args.action == Actions.GENERATE:
     #     generate(args)
     # elif args.action == Actions.BRUTE_FORCE:
