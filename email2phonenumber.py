@@ -279,7 +279,7 @@ def getMaskedEmailWithTwitter(phoneNumbers, victimEmail, verbose):
         print(RED + "Couldn't find a phone number associated to " + args.email + ENDC)
 
 
-def start_scraping(email, quiet_mode, user_agents_instance ,proxy_instance):
+def start_scraping(email, quiet_mode, user_agents_instance, proxy_instance):
     scrapers = get_scrapers(email, quiet_mode, user_agents_instance, proxy_instance)
     for scraper in scrapers:
         scraper.scrape()
@@ -425,6 +425,7 @@ def parse_arguments():
                                   help="use services that do not alert the victim")
     generator_parser.add_argument("-p", metavar="PROXYLIST", dest="proxies",
                                   help="a file with a list of https proxies to use. Format: https://127.0.0.1:8080")
+    generator_parser.add_argument("-r", metavar="REGION", dest="region", help="region, default region is US")
     bruteforce_parser = subparsers.add_parser(Actions.BRUTE_FORCE,
                                               help='bruteforce using online services to find the phone number')
     bruteforce_parser.add_argument("-e", required=True, metavar="EMAIL", dest="email", help="victim's email address")
@@ -479,14 +480,14 @@ def brutforce(args):
 
 if __name__ == '__main__':
     args = parse_arguments()
-    settings = Settings()
-    proxy_instance = Proxy(args.proxies, settings)
+    settings = Settings(args)
+    proxy_instance = Proxy(settings)
     user_agents_instance = UserAgentsCycle(settings)
 
     if args.action == Actions.SCRAPE:
         start_scraping(args.email, args.quiet, user_agents_instance, proxy_instance)
-    # elif args.action == Actions.GENERATE:
-    #     generate(args)
+    elif args.action == Actions.GENERATE:
+        generate(args)
     # elif args.action == Actions.BRUTE_FORCE:
     #     brutforce(args)
     # else:

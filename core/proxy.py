@@ -4,11 +4,11 @@ from globals import RED, ENDC
 
 
 class Proxy(object):
-    def __init__(self, path_to_proxy_file, settings):
-        self._file_path = path_to_proxy_file
+    def __init__(self, settings):
+        self._file_path = settings.path_to_proxy_file
         self._parsed_proxies = []
         self._parsed = False
-        self._verify_proxy = settings.verifyProxy
+        self._verify_proxy = settings.verify_proxy
 
     @property
     def verify_proxy(self):
