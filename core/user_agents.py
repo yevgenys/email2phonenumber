@@ -11,9 +11,7 @@ class UserAgentsCycle(object):
         self._user_agents = itertools.cycle(self._read())
 
     def next(self):
-        return next(
-            self._user_agents
-        )
+        return next(self._user_agents)
 
     def _read(self):
         """

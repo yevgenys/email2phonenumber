@@ -4,21 +4,19 @@ import argparse
 import os
 import random
 import re
-import time
 import urllib
-import zipfile
-from itertools import product
 
 import requests
 from bs4 import BeautifulSoup
 
 from core.proxy import Proxy
-from globals import YELLOW, ENDC, RED, GREEN, Actions
+from constants import YELLOW, ENDC, RED, GREEN, Actions
 from scrapers.ebay import Ebay
 from scrapers.lastpass import LastPass
 from scrapers.paypal import PayPal
 from settings import Settings
 from core.user_agents import UserAgentsCycle
+from generators.phonenumber import PhonenumberGenerator
 
 requests.packages.urllib3.disable_warnings()
 poolingCache = {}  # To cache results from nationalpooling website and save bandwith
@@ -296,115 +294,6 @@ def get_scrapers(email, quiet_mode, user_agents_instance, proxy_instance):
         LastPass(**scraper_parameters)
     ]
 
-############ GENERATORS ############
-
-# Returns all possible valid phone numbers according to NANPA based on a partial phone number
-def getPossiblePhoneNumbers(maskedPhone):
-    global poolingCache
-
-    possiblePhoneNumbers = []
-    nanpaFileUrl = "https://www.nationalnanpa.com/nanp1/allutlzd.zip"
-
-    # Check if we need to download/update NANPA file
-    if not os.path.exists("./allutlzd.zip") or (time.time() - os.path.getmtime("./allutlzd.zip")) > (24 * 60 * 60):
-        print("NANPA file missing or needs to be updated. Downloading now...")
-        response = requests.get(nanpaFileUrl)
-        with open("allutlzd.zip", "wb") as code:
-            code.write(response.content)
-        print("NANPA file downloaded successfully")
-
-    archive = zipfile.ZipFile('./allutlzd.zip', 'r')
-    file = archive.read('allutlzd.txt')
-    archive.close()
-
-    assignedRegex = '\s[0-9A-Z\s]{4}\t.*\t[A-Z\-\s]+\t[0-9\\]*[\t\s]+AS'  # Only assigned area codes and exchanges
-    areacodeExchangeRegex = re.sub("X", "[0-9]{1}",
-                                   "(" + maskedPhone[:3] + "-" + maskedPhone[3:6] + ")")  # Area code + exchange
-    possibleAreacodeExchanges = re.findall("([A-Z]{2})\s\t" + areacodeExchangeRegex + assignedRegex,
-                                           file)  # Format: [state, areacode-exchange]
-
-    remainingX = maskedPhone[7:].count("X")
-    maskedPhoneFormatted = maskedPhone[7:].replace("X", "{}")
-    for possibleAreacodeExchange in possibleAreacodeExchanges:
-        state = possibleAreacodeExchange[0]
-        areacode = possibleAreacodeExchange[1].split("-")[0]
-        exchange = possibleAreacodeExchange[1].split("-")[1]
-
-        if areacode not in poolingCache:
-            cacheValidBlockNumbers(state, areacode)
-
-        if maskedPhone[6] == 'X':  # Check for available block numbers for that area code and exchange
-            if areacode in poolingCache and exchange in poolingCache[areacode]:
-                blockNumbers = poolingCache[areacode][exchange]['blockNumbers']
-            else:
-                blockNumbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
-
-        else:  # User provided blocknumber
-            if areacode in poolingCache and exchange in poolingCache[areacode] and maskedPhone[6] not in \
-                    poolingCache[areacode][exchange]['blockNumbers']:  # User provided invalid block number
-                blockNumbers = []
-            else:
-                blockNumbers = [maskedPhone[6]]
-
-        for blockNumber in blockNumbers:  # Add the rest of random subscriber number digits
-            for x in product("0123456789", repeat=remainingX):
-                possiblePhoneNumbers.append(areacode + exchange + blockNumber + maskedPhoneFormatted.format(*x))
-
-    return possiblePhoneNumbers
-
-
-def cacheValidBlockNumbers(state, areacode):
-    global userAgents
-    global poolingCache
-
-    proxy = proxy_instance.get_random_proxy()
-    session = requests.Session()
-    session.get(
-        "https://www.nationalpooling.com/pas/blockReportSelect.do?reloadModel=N")  # We need the cookies or it will error
-    response = session.post("https://www.nationalpooling.com/pas/blockReportDisplay.do",
-                            headers={"Upgrade-Insecure-Requests": "1",
-                                     "User-Agent": random.choice(userAgents),
-                                     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
-                                     "Referer": "https://www.nationalpooling.com/pas/blockReportSelect.do?reloadModel=Y",
-                                     "Accept-Encoding": "gzip, deflate, br",
-                                     "Accept-Language": "en-US,en;q=0.9,es;q=0.8",
-                                     "Origin": "https://www.nationalpooling.com",
-                                     "Content-Type": "application/x-www-form-urlencoded",
-                                     "DNT": "1"
-                                     },
-                            data="stateAbbr=" + state +
-                                 "&npaId=" + areacode +
-                                 "&rtCntrId=" + "ALL" +
-                                 "&reportType=" + "3",
-                            proxies=proxy,
-                            verify=verifyProxy)
-
-    soup = BeautifulSoup(response.text, 'html.parser')
-    availableBlockNumbers = []
-    areacodeCells = soup.select("form table td:nth-of-type(1)")
-    for areaCodeCell in areacodeCells:
-        if areaCodeCell.string and areaCodeCell.string.strip() == areacode:
-            exchange = areaCodeCell.next_sibling.next_sibling.string.strip()
-            blockNumber = areaCodeCell.next_sibling.next_sibling.next_sibling.next_sibling.string.strip()
-
-            if areacode not in poolingCache:
-                poolingCache[areacode] = {}
-                poolingCache[areacode][exchange] = {}
-                poolingCache[areacode][exchange]['blockNumbers'] = []
-            elif exchange not in poolingCache[areacode]:
-                poolingCache[areacode][exchange] = {}
-                poolingCache[areacode][exchange]['blockNumbers'] = []
-
-            poolingCache[areacode][exchange]['blockNumbers'].append(
-                blockNumber)  # Temporarely we store the invalid blocknumbers
-
-    for areacode in poolingCache:  # Let's switch invalid blocknumbers for valid ones
-        for exchange in poolingCache[areacode]:
-            poolingCache[areacode][exchange]['blockNumbers'] = [n for n in
-                                                                ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"] if
-                                                                n not in poolingCache[areacode][exchange][
-                                                                    'blockNumbers']]
-
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='An OSINT tool to find phone numbers associated to email addresses')
@@ -440,22 +329,7 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def generate(args):
-    if not re.match("^[0-9X]{10}", args.mask):
-        exit(RED + "You need to pass a US phone number masked as in: 555XXX1234" + ENDC)
-    possiblePhoneNumbers = getPossiblePhoneNumbers(args.mask)
-    if args.file:
-        with open(args.file, 'w') as f:
-            f.write('\n'.join(possiblePhoneNumbers))
-        print(GREEN + "Dictionary created successfully at " + os.path.realpath(f.name) + ENDC)
-        f.close()
-
-    else:
-        print(GREEN + "There are " + str(len(possiblePhoneNumbers)) + " possible numbers" + ENDC)
-        print(GREEN + str(possiblePhoneNumbers) + ENDC)
-
-
-def brutforce(args):
+def bruteforce(args):
     if args.email and not re.match(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", args.email):
         exit(RED + "Email is invalid" + ENDC)
     if (args.mask and args.file) or (not args.mask and not args.file):
@@ -483,12 +357,14 @@ if __name__ == '__main__':
     settings = Settings(args)
     proxy_instance = Proxy(settings)
     user_agents_instance = UserAgentsCycle(settings)
+    
 
     if args.action == Actions.SCRAPE:
         start_scraping(args.email, args.quiet, user_agents_instance, proxy_instance)
-    elif args.action == Actions.GENERATE:
-        generate(args)
+    elif args.action == Actions.GENERATE:        
+        generator = PhonenumberGenerator(settings, {}, user_agents_instance, proxy_instance)
+        generator.generate(args)
     # elif args.action == Actions.BRUTE_FORCE:
-    #     brutforce(args)
+    #     bruteforce(args)
     # else:
     #     exit(RED + "action not recognized" + ENDC)

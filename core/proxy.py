@@ -1,6 +1,6 @@
 import random
 
-from globals import RED, ENDC
+from constants import RED, ENDC
 
 
 class Proxy(object):
