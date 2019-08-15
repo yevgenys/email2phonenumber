@@ -1,8 +1,5 @@
 import re
-
 import requests
-
-from constants import YELLOW, ENDC, GREEN
 from scrapers import Scraper
 
 
@@ -28,7 +25,7 @@ class PayPal(Scraper):
         if regex_output and regex_output.group(1):
             _csrf = regex_output.group(1)
         else:
-            print(YELLOW + "Paypal did not report any digits" + ENDC)
+            print(self.colors.YELLOW + "Paypal did not report any digits" + self.colors.ENDC)
             return
 
         response = session.post("https://www.paypal.com/authflow/password-recovery",
@@ -57,7 +54,7 @@ class PayPal(Scraper):
         if regex_output and regex_output.group(1): jse = regex_output.group(1)
 
         if not _csrf or not _sessionID or not jse:
-            print(YELLOW + "Paypal did not report any digits" + ENDC)
+            print(self.colors.YELLOW + "Paypal did not report any digits" + self.colors.ENDC)
             return
 
         response = session.post("https://www.paypal.com/auth/validatecaptcha",
@@ -84,7 +81,7 @@ class PayPal(Scraper):
         if regex_output and regex_output.group(1):
             client_instance_id = regex_output.group(1)
         else:
-            print(YELLOW + "Paypal did not report any digits" + ENDC)
+            print(self.colors.YELLOW + "Paypal did not report any digits" + self.colors.ENDC)
             return
 
         response = session.get("https://www.paypal.com/authflow/entry/?clientInstanceId=" + client_instance_id,
@@ -102,16 +99,16 @@ class PayPal(Scraper):
         regex_output = re.search("Mobile <span.+((\d+)\W+(\d+))<\/span>", response.text)
         if regex_output and regex_output.group(3):
             last4 = regex_output.group(3)
-            print(GREEN + "Pyapal reports that the last " + len(
-                regex_output.group(3)) + " digits are: " + last_digits + ENDC)
+            print(self.colors.GREEN + "Pyapal reports that the last " + len(
+                regex_output.group(3)) + " digits are: " + last_digits + self.colors.ENDC)
 
             if regex_output.group(2):
                 firstDigit = regex_output.group(2)
-                print(GREEN + "Paypal reports that the first digit is: " + regex_output.group(2) + ENDC)
+                print(self.colors.GREEN + "Paypal reports that the first digit is: " + regex_output.group(2) + self.colors.ENDC)
 
             if regex_output.group(1):
-                print(GREEN + "Paypal reports that the length of the phone number (without country code) is " + len(
-                    regex_output.group(1)) + " digits" + ENDC)  # TODO: remove spaces
+                print(self.colors.GREEN + "Paypal reports that the length of the phone number (without country code) is " + len(
+                    regex_output.group(1)) + " digits" + self.colors.ENDC)  # TODO: remove spaces
 
         else:
-            print(YELLOW + "Paypal did not report any digits" + ENDC)
+            print(self.colors.YELLOW + "Paypal did not report any digits" + self.colors.ENDC)

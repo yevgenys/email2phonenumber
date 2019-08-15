@@ -1,8 +1,5 @@
 import re
-
 import requests
-
-from constants import YELLOW, ENDC, GREEN
 from scrapers import Scraper
 
 
@@ -28,7 +25,7 @@ class Ebay(Scraper):
         if regex_output and regex_output.group(1):
             reqinput = regex_output.group(1)
         else:
-            print(YELLOW + "Ebay did not report any digits" + ENDC)
+            print(self.colors.YELLOW + "Ebay did not report any digits" + self.colors.ENDC)
             return
 
         response = session.post(
@@ -60,9 +57,9 @@ class Ebay(Scraper):
         if regex_output:
             if regex_output.group(1):
                 first1 = regex_output.group(1)
-                print(GREEN + "Ebay reports that the first digit is: " + first1 + ENDC)
+                print(self.colors.GREEN + "Ebay reports that the first digit is: " + first1 + self.colors.ENDC)
             if regex_output.group(2):
                 last2 = regex_output.group(2)
-                print(GREEN + "Ebay reports that the last 2 digits are: " + last2 + ENDC)
+                print(self.colors.GREEN + "Ebay reports that the last 2 digits are: " + last2 + self.colors.ENDC)
         else:
-            print(YELLOW + "Ebay did not report any digits" + ENDC)
+            print(self.colors.YELLOW + "Ebay did not report any digits" + self.colors.ENDC)

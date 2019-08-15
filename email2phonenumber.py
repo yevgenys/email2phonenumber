@@ -276,14 +276,21 @@ def getMaskedEmailWithTwitter(phoneNumbers, victimEmail, verbose):
         print(colors.RED + "Couldn't find a phone number associated to " + args.email + ENDC)
 
 
-def start_scraping(email, quiet_mode, user_agents_instance, proxy_instance):
-    scrapers = get_scrapers(email, quiet_mode, user_agents_instance, proxy_instance)
+def start_scraping(email, quiet_mode, user_agents_instance, proxy_instance, colors):
+    scrapers = get_scrapers(email, 
+                            quiet_mode, 
+                            user_agents_instance, 
+                            proxy_instance,
+                            colors)
     for scraper in scrapers:
         scraper.scrape()
 
 
-def get_scrapers(email, quiet_mode, user_agents_instance, proxy_instance):
-    scraper_parameters = dict(email=email, user_agents=user_agents_instance, proxy=proxy_instance)
+def get_scrapers(email, quiet_mode, user_agents_instance, proxy_instance, colors):
+    scraper_parameters = dict(email=email, 
+                              user_agents=user_agents_instance, 
+                              proxy=proxy_instance, 
+                              colors=colors)
     if quiet_mode:
         return [
             PayPal(**scraper_parameters)
@@ -360,7 +367,7 @@ if __name__ == '__main__':
     
 
     if args.action == Actions.SCRAPE:
-        start_scraping(args.email, args.quiet, user_agents_instance, proxy_instance)
+        start_scraping(args.email, args.quiet, user_agents_instance, proxy_instance, colors)
     elif args.action == Actions.GENERATE:        
         generator = PhonenumberGenerator(settings, 
                                          {}, 
