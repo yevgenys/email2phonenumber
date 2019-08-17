@@ -11,12 +11,12 @@ import requests
 from constants import Colors, Actions
 from core.proxy import Proxy
 from core.user_agents import UserAgentsCycle
-from suppliers.agnostic_supplier import AgnosticSupplier
+
 from scrapers.ebay import Ebay
 from scrapers.lastpass import LastPass
 from scrapers.paypal import PayPal
 from settings import Settings
-from suppliers.phonenumber_supplier import PhonenumberSupplier, dump_supplied_phones
+from suppliers.agnostic_supplier import AgnosticSupplier
 
 requests.packages.urllib3.disable_warnings()
 poolingCache = {}  # To cache results from nationalpooling website and save bandwith
