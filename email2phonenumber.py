@@ -4,18 +4,18 @@ import argparse
 import os
 import random
 import re
-import requests
 import urllib
 
+import requests
 
 from constants import Colors, Actions
-from settings import Settings
 from core.proxy import Proxy
 from core.user_agents import UserAgentsCycle
-from generators.phonenumber import PhonenumberGenerator
+from suppliers.phonenumber_supplier import PhonenumberSupplier, dump_supplied_phones
 from scrapers.ebay import Ebay
 from scrapers.lastpass import LastPass
 from scrapers.paypal import PayPal
+from settings import Settings
 
 requests.packages.urllib3.disable_warnings()
 poolingCache = {}  # To cache results from nationalpooling website and save bandwith
@@ -276,6 +276,30 @@ def getMaskedEmailWithTwitter(phoneNumbers, victimEmail, verbose):
         print(colors.RED + "Couldn't find a phone number associated to " + args.email + ENDC)
 
 
+def bruteforce(args):
+    if args.email and not re.match(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", args.email):
+        exit(colors.RED + "Email is invalid" + ENDC)
+    if (args.mask and args.file) or (not args.mask and not args.file):
+        exit(colors.RED + "You need to provide a masked number or a file with numbers to try" + ENDC)
+    if args.mask and not re.match("^[0-9X]{10}", args.mask): exit(
+        colors.RED + "You need to pass a 10-digit US phone number masked as in: 555XXX1234" + ENDC)
+    if args.file and not os.path.isfile(args.file): exit(colors.RED + "You need to pass a valid file path" + ENDC)
+    print("Looking for the phone number associated to " + args.email + "...")
+    if args.mask:
+        possiblePhoneNumbers = getPossiblePhoneNumbers(args.mask)
+    else:
+        f = open(args.file, "r")
+        if not f.mode == 'r':
+            f.close()
+            exit(colors.RED + "Could not read file " + args.file + ENDC)
+        fileContent = f.read()
+        fileContent = filter(None, fileContent)  # Remove last \n if needed
+        possiblePhoneNumbers = fileContent.split("\n")
+        f.close()
+    startBruteforcing(possiblePhoneNumbers, args.email, args.quiet, args.verbose)
+
+
+#TODO: move this also to agnostic class like suppliers
 def start_scraping(email, quiet_mode, user_agents_instance, proxy_instance, colors):
     scrapers = get_scrapers(email, 
                             quiet_mode, 
@@ -335,46 +359,23 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def bruteforce(args):
-    if args.email and not re.match(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", args.email):
-        exit(colors.RED + "Email is invalid" + ENDC)
-    if (args.mask and args.file) or (not args.mask and not args.file):
-        exit(colors.RED + "You need to provide a masked number or a file with numbers to try" + ENDC)
-    if args.mask and not re.match("^[0-9X]{10}", args.mask): exit(
-        colors.RED + "You need to pass a 10-digit US phone number masked as in: 555XXX1234" + ENDC)
-    if args.file and not os.path.isfile(args.file): exit(colors.RED + "You need to pass a valid file path" + ENDC)
-    print("Looking for the phone number associated to " + args.email + "...")
-    if args.mask:
-        possiblePhoneNumbers = getPossiblePhoneNumbers(args.mask)
-    else:
-        f = open(args.file, "r")
-        if not f.mode == 'r':
-            f.close()
-            exit(colors.RED + "Could not read file " + args.file + ENDC)
-        fileContent = f.read()
-        fileContent = filter(None, fileContent)  # Remove last \n if needed
-        possiblePhoneNumbers = fileContent.split("\n")
-        f.close()
-    startBruteforcing(possiblePhoneNumbers, args.email, args.quiet, args.verbose)
-
-
 if __name__ == '__main__':
     args = parse_arguments()
     settings = Settings(args)
     colors = Colors()
     proxy_instance = Proxy(settings, colors)
     user_agents_instance = UserAgentsCycle(settings)
-    
 
     if args.action == Actions.SCRAPE:
         start_scraping(args.email, args.quiet, user_agents_instance, proxy_instance, colors)
-    elif args.action == Actions.GENERATE:        
-        generator = PhonenumberGenerator(settings, 
-                                         {}, 
-                                         user_agents_instance, 
-                                         proxy_instance,
-                                         colors)
-        generator.generate(args)
+    elif args.action == Actions.GENERATE:
+        generator = PhonenumberSupplier(settings,
+                                        user_agents_instance,
+                                        proxy_instance,
+                                        colors,
+                                        args.mask)
+        possible_phone_numbers = generator.supply()
+        dump_supplied_phones(args.file, possible_phone_numbers, colors)
     # elif args.action == Actions.BRUTE_FORCE:
     #     bruteforce(args)
     # else:

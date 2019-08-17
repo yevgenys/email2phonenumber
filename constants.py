@@ -1,7 +1,7 @@
 from colorama import init, Fore, Style
 
-class Colors(object):
 
+class Colors(object):
     def __init__(self):
         init()
     
