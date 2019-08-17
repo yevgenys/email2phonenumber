@@ -1,12 +1,12 @@
 import os
 import re
+import requests
 import time
 import zipfile
+from copy import copy
 from itertools import product
 
-import requests
 from bs4 import BeautifulSoup
-
 from suppliers import Supplier
 
 

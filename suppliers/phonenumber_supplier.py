@@ -1,6 +1,5 @@
 import os
 import re
-from copy import copy
 
 from suppliers import Supplier
 from suppliers.us_phonenumber_supplier import USPhoneNumberSupplier
