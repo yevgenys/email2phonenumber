@@ -2,31 +2,29 @@ import os
 import re
 from copy import copy
 
-from suppliers import Supplier, USPhoneNumberSupplier
-
-
-def dump_supplied_phones(output_file, possible_phone_numbers, colors):
-    if output_file:
-        with open(output_file, 'w') as f:
-            f.write('\n'.join(possible_phone_numbers))
-        print(colors.GREEN + "Dictionary created successfully at " + os.path.realpath(f.name) + colors.ENDC)
-    else:
-        print(colors.GREEN + "There are " + str( len(possible_phone_numbers)) + " possible numbers" + colors.ENDC)
-        print(colors.GREEN + str(possible_phone_numbers) + colors.ENDC)
+from suppliers import Supplier
+from suppliers.us_phonenumber_supplier import USPhoneNumberSupplier
 
 
 class PhonenumberSupplier(Supplier):
     def __init__(self, settings, user_agent_instance, proxy_instance, colors, mask):
         self.region = settings.region
-        self.mask = mask
         self.colors = colors
-        self.cache = {}
         self.map_region = {
-            "US": USPhoneNumberSupplier(self.cache, user_agent_instance, proxy_instance, copy(self.mask))
+            "US": USPhoneNumberSupplier({}, user_agent_instance, proxy_instance, colors, mask)
         }
 
     def supply(self):
-        if not re.match("^[0-9X]{10}", self.mask):
-            exit(self.colors.RED + "You need to pass a US phone number masked as in: 555XXX1234" + self.colors.ENDC)
+        if self.region not in self.map_region:
+            exit(f"{self.region} is not supported yet. ")
 
         return self.map_region[self.region].supply()
+    
+    def dump_supplied_phones(self, output_file, possible_phone_numbers):
+        if output_file:
+            with open(output_file, 'w') as f:
+                f.write('\n'.join(possible_phone_numbers))
+            print(self.colors.GREEN + "Dictionary created successfully at " + os.path.realpath(f.name) + self.colors.ENDC)
+        else:
+            print(self.colors.GREEN + "There are " + str( len(possible_phone_numbers)) + " possible numbers" + self.colors.ENDC)
+            print(self.colors.GREEN + str(possible_phone_numbers) + self.colors.ENDC)
