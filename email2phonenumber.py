@@ -11,10 +11,7 @@ import requests
 from constants import Colors, Actions
 from core.proxy import Proxy
 from core.user_agents import UserAgentsCycle
-<<<<<<< HEAD
 from suppliers.agnostic_supplier import AgnosticSupplier
-=======
->>>>>>> cf8e5ab4b45f9b141f37a2c18a9a6456fd505a3e
 from scrapers.ebay import Ebay
 from scrapers.lastpass import LastPass
 from scrapers.paypal import PayPal
