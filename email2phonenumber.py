@@ -11,11 +11,11 @@ import requests
 from constants import Colors, Actions
 from core.proxy import Proxy
 from core.user_agents import UserAgentsCycle
-from suppliers.phonenumber_supplier import PhonenumberSupplier, dump_supplied_phones
 from scrapers.ebay import Ebay
 from scrapers.lastpass import LastPass
 from scrapers.paypal import PayPal
 from settings import Settings
+from suppliers.phonenumber_supplier import PhonenumberSupplier, dump_supplied_phones
 
 requests.packages.urllib3.disable_warnings()
 poolingCache = {}  # To cache results from nationalpooling website and save bandwith
@@ -369,12 +369,12 @@ if __name__ == '__main__':
     if args.action == Actions.SCRAPE:
         start_scraping(args.email, args.quiet, user_agents_instance, proxy_instance, colors)
     elif args.action == Actions.GENERATE:
-        generator = PhonenumberSupplier(settings,
-                                        user_agents_instance,
-                                        proxy_instance,
-                                        colors,
-                                        args.mask)
-        possible_phone_numbers = generator.supply()
+        supplier = PhonenumberSupplier(settings,
+                                       user_agents_instance,
+                                       proxy_instance,
+                                       colors,
+                                       args.mask)
+        possible_phone_numbers = supplier.supply()
         dump_supplied_phones(args.file, possible_phone_numbers, colors)
     # elif args.action == Actions.BRUTE_FORCE:
     #     bruteforce(args)
