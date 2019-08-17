@@ -1,3 +1,4 @@
+from urllib.parse import urlparse
 import random
 
 
@@ -31,10 +32,10 @@ class Proxy(object):
                     file_content = "".join(list(file_content))
                     proxy_list_unformatted = file_content.split("\n")
                     for proxy_unformatted in proxy_list_unformatted:
-                        separator_position = proxy_unformatted.find("://")
-                        self._parsed_proxies.append(
-                            {proxy_unformatted[:separator_position]: proxy_unformatted[separator_position + 3:]})
+                        proxy_parsed = urlparse(proxy_unformatted)
+                        
+                        self._parsed_proxies.append({ proxy_parsed.scheme: proxy_parsed.netloc})
 
-            self._parsed = True
+                self._parsed = True
         except Exception as e:
             exit(self.colors.RED + "{}Could not read file {};\nException: {}{}".format(self.colors.RED, self._file_path, str(e), self.colors.ENDC))
