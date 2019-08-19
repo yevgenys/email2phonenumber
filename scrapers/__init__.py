@@ -1,7 +1,7 @@
 import abc
 
 
-class Scraper(object):
+class Scraper:
     """
     parent for all scrapers
     """

@@ -2,7 +2,7 @@ import itertools
 import os
 
 
-class UserAgentsCycle(object):
+class UserAgentsCycle:
     """
     the idea is to get always next/new, instead of random - to not use same agent twice
     """

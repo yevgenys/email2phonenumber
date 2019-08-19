@@ -7,10 +7,9 @@ from copy import copy
 from itertools import product
 
 from bs4 import BeautifulSoup
-from suppliers import Supplier
 
 
-class USPhoneNumberSupplier(Supplier):
+class USPhoneNumberSupplier:
     def __init__(self, cache, user_agent_instance, proxy_instance, colors, mask):
         self.user_agent_instance = user_agent_instance
         self.proxy_instance = proxy_instance
@@ -69,7 +68,7 @@ class USPhoneNumberSupplier(Supplier):
     def supply(self):
         if not re.match("^[0-9X]{10}", self.mask):
             exit(self.colors.RED + "You need to pass a US phone number masked as in: 555XXX1234" + self.colors.ENDC)
-        
+
         possible_phone_numbers = []
         nanpa_file_url = "https://www.nationalnanpa.com/nanp1/allutlzd.zip"
         file = self._read_or_download_nanpa_zip_archive(nanpa_file_url)

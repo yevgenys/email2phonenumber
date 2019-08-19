@@ -1,7 +1,7 @@
 from colorama import init, Fore, Style
 
 
-class Colors(object):
+class Colors:
     def __init__(self):
         init()
     
@@ -11,7 +11,10 @@ class Colors(object):
         self.ENDC = Style.RESET_ALL
 
 
-class Actions(object):
+class Action:
     SCRAPE = 'scrape'
     GENERATE = 'generate'
     BRUTE_FORCE = 'bruteforce'
+
+
+PHONE_NUMBER = 'PHONE_NUMBER'

@@ -2,7 +2,7 @@ from urllib.parse import urlparse
 import random
 
 
-class Proxy(object):
+class Proxy:
     def __init__(self, settings, colors):
         self._file_path = settings.path_to_proxy_file
         self._parsed_proxies = []
