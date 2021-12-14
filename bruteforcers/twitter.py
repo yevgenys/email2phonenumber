@@ -30,7 +30,7 @@ class Twitter(Bruteforcer):
                                             "Accept-Language": "en-US,en;q=0.9"
                                             },
                                    proxies=proxy,
-                                   verify=False)
+                                   verify=self.proxy_instance.verify_proxy)
 
             regex_output = re.search('authenticity_token.+value="(\w+)">', response.text)
             authenticity_token = regex_output.group(1) if regex_output and regex_output.group(1) else ""
@@ -53,7 +53,7 @@ class Twitter(Bruteforcer):
                                          "&account_identifier=" + phoneNumber,
                                     allow_redirects=False,
                                     proxies=proxy,
-                                    verify=False)
+                                    verify=self.proxy_instance.verify_proxy)
 
             if "Location" in response.headers and response.headers['Location'] == "https://twitter.com/account/password_reset_help?c=4":
                 self.logger.error(
@@ -70,7 +70,7 @@ class Twitter(Bruteforcer):
                                             "Accept-Language": "en-US,en;q=0.9"
                                             },
                                    proxies=proxy,
-                                   verify=False)
+                                   verify=self.proxy_instance.verify_proxy)
 
             regex_output = re.search('<strong .+>([a-zA-Z]+\*+@[a-zA-Z\*\.]+)<\/strong>', response.text)
             if regex_output and regex_output.group(1):

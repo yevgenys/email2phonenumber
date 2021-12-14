@@ -1,11 +1,14 @@
+import logging
 import re
 import requests
 from scrapers import Scraper
 
 
 class LastPass(Scraper):
+    logger = logging.getLogger(__name__)
+
     def scrape(self):
-        print("Scraping Lastpass...")
+        self.logger.info("Scraping Lastpass...")
         user_agent = self.user_agents_instance.next()
         proxy = self.proxy_instance.get_random_proxy()
         session = requests.Session()
@@ -38,18 +41,21 @@ class LastPass(Scraper):
                                 proxies=proxy,
                                 verify=self.proxy_instance.verify_proxy)
         regex_output = re.search("We sent an SMS with a verification code to .*>(\+?)(.+([0-9]{2}))<\/strong>",
-                                response.text)
+                                 response.text)
         if regex_output and regex_output.group(3):
             last2 = regex_output.group(3)
-            print(self.colors.GREEN + "Lastpass reports that the last 2 digits are: " + last2 + self.colors.ENDC)
+            self.logger.info(
+                self.colors.GREEN + "Lastpass reports that the last 2 digits are: " + last2 + self.colors.ENDC)
 
             if regex_output.group(1):
-                print(self.colors.GREEN + "Lastpass reports a non US phone number" + self.colors.ENDC)
-                print(self.colors.GREEN + "Lastpass reports that the length of the phone number (including country code) is " + str(
-                    len(regex_output.group(2).replace("-", ""))) + " digits" + self.colors.ENDC)
+                self.logger.info(self.colors.GREEN + "Lastpass reports a non US phone number" + self.colors.ENDC)
+                self.logger.info(
+                    self.colors.GREEN + "Lastpass reports that the length of the phone number (including country code) is " + str(
+                        len(regex_output.group(2).replace("-", ""))) + " digits" + self.colors.ENDC)
             else:
-                print(self.colors.GREEN + "Lastpass reports a US phone number" + self.colors.ENDC)
-                print(self.colors.GREEN + "Lastpass reports that the length of the phone number (without country code) is " + str(
-                    len(regex_output.group(2).replace("-", ""))) + " digits" + self.colors.ENDC)
+                self.logger.info(self.colors.GREEN + "Lastpass reports a US phone number" + self.colors.ENDC)
+                self.logger.info(
+                    self.colors.GREEN + "Lastpass reports that the length of the phone number (without country code) is " + str(
+                        len(regex_output.group(2).replace("-", ""))) + " digits" + self.colors.ENDC)
         else:
-            print(self.colors.YELLOW + "Lastpass did not report any digits" + self.colors.ENDC)
+            self.logger.warning(self.colors.YELLOW + "Lastpass did not report any digits" + self.colors.ENDC)

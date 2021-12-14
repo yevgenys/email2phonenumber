@@ -116,6 +116,9 @@ def parse_arguments():
 
 
 if __name__ == '__main__':
+    import logging
+    logging.basicConfig(level=logging.INFO)
+
     args = parse_arguments()
     settings = Settings(args)
     colors = Colors()

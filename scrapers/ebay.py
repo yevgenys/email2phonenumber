@@ -1,11 +1,14 @@
+import logging
 import re
 import requests
 from scrapers import Scraper
 
 
 class Ebay(Scraper):
+    logger = logging.getLogger(__name__)
+
     def scrape(self):
-        print("Scraping Ebay...")
+        self.logger.info("Scraping Ebay...")
         user_agent = self.user_agents_instance.next()
         proxy = self.proxy_instance.get_random_proxy()
 
@@ -25,7 +28,7 @@ class Ebay(Scraper):
         if regex_output and regex_output.group(1):
             reqinput = regex_output.group(1)
         else:
-            print(self.colors.YELLOW + "Ebay did not report any digits" + self.colors.ENDC)
+            self.logger.warning(self.colors.YELLOW + "Ebay did not report any digits" + self.colors.ENDC)
             return
 
         response = session.post(
@@ -57,9 +60,9 @@ class Ebay(Scraper):
         if regex_output:
             if regex_output.group(1):
                 first1 = regex_output.group(1)
-                print(self.colors.GREEN + "Ebay reports that the first digit is: " + first1 + self.colors.ENDC)
+                self.logger.info(self.colors.GREEN + "Ebay reports that the first digit is: " + first1 + self.colors.ENDC)
             if regex_output.group(2):
                 last2 = regex_output.group(2)
-                print(self.colors.GREEN + "Ebay reports that the last 2 digits are: " + last2 + self.colors.ENDC)
+                self.logger.info(self.colors.GREEN + "Ebay reports that the last 2 digits are: " + last2 + self.colors.ENDC)
         else:
-            print(self.colors.YELLOW + "Ebay did not report any digits" + self.colors.ENDC)
+            self.logger.warning(self.colors.YELLOW + "Ebay did not report any digits" + self.colors.ENDC)

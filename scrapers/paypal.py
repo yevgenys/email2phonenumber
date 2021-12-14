@@ -1,11 +1,14 @@
+import logging
 import re
 import requests
 from scrapers import Scraper
 
 
 class PayPal(Scraper):
+    logger = logging.getLogger(__name__)
+
     def scrape(self):
-        print("Scraping Paypal...")
+        self.logger.info("Scraping Paypal...")
         user_agent = self.user_agents_instance.next()
         proxy = self.proxy_instance.get_random_proxy()
 
@@ -25,7 +28,7 @@ class PayPal(Scraper):
         if regex_output and regex_output.group(1):
             _csrf = regex_output.group(1)
         else:
-            print(self.colors.YELLOW + "Paypal did not report any digits" + self.colors.ENDC)
+            self.logger.warning(self.colors.YELLOW + "Paypal did not report any digits" + self.colors.ENDC)
             return
 
         response = session.post("https://www.paypal.com/authflow/password-recovery",
@@ -54,7 +57,7 @@ class PayPal(Scraper):
         if regex_output and regex_output.group(1): jse = regex_output.group(1)
 
         if not _csrf or not _sessionID or not jse:
-            print(self.colors.YELLOW + "Paypal did not report any digits" + self.colors.ENDC)
+            self.logger.warning(self.colors.YELLOW + "Paypal did not report any digits" + self.colors.ENDC)
             return
 
         response = session.post("https://www.paypal.com/auth/validatecaptcha",
@@ -81,7 +84,7 @@ class PayPal(Scraper):
         if regex_output and regex_output.group(1):
             client_instance_id = regex_output.group(1)
         else:
-            print(self.colors.YELLOW + "Paypal did not report any digits" + self.colors.ENDC)
+            self.logger.warning(self.colors.YELLOW + "Paypal did not report any digits" + self.colors.ENDC)
             return
 
         response = session.get("https://www.paypal.com/authflow/entry/?clientInstanceId=" + client_instance_id,
@@ -99,16 +102,15 @@ class PayPal(Scraper):
         regex_output = re.search("Mobile <span.+((\d+)\W+(\d+))<\/span>", response.text)
         if regex_output and regex_output.group(3):
             last4 = regex_output.group(3)
-            print(self.colors.GREEN + "Pyapal reports that the last " + len(
-                regex_output.group(3)) + " digits are: " + last_digits + self.colors.ENDC)
+            self.logger.info(self.colors.GREEN + "Pyapal reports that the last " + len(last4) + " digits are: " + last_digits + self.colors.ENDC)
 
             if regex_output.group(2):
                 firstDigit = regex_output.group(2)
-                print(self.colors.GREEN + "Paypal reports that the first digit is: " + regex_output.group(2) + self.colors.ENDC)
+                self.logger.info(self.colors.GREEN + "Paypal reports that the first digit is: " + firstDigit + self.colors.ENDC)
 
             if regex_output.group(1):
-                print(self.colors.GREEN + "Paypal reports that the length of the phone number (without country code) is " + len(
+                self.logger.info(self.colors.GREEN + "Paypal reports that the length of the phone number (without country code) is " + len(
                     regex_output.group(1)) + " digits" + self.colors.ENDC)  # TODO: remove spaces
 
         else:
-            print(self.colors.YELLOW + "Paypal did not report any digits" + self.colors.ENDC)
+            self.logger.warning(self.colors.YELLOW + "Paypal did not report any digits" + self.colors.ENDC)

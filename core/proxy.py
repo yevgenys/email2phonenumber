@@ -34,7 +34,7 @@ class Proxy:
                     for proxy_unformatted in proxy_list_unformatted:
                         proxy_parsed = urlparse(proxy_unformatted)
                         
-                        self._parsed_proxies.append({ proxy_parsed.scheme: proxy_parsed.netloc})
+                        self._parsed_proxies.append({ proxy_parsed.scheme: proxy_unformatted})
 
                 self._parsed = True
         except Exception as e:
