@@ -20,25 +20,25 @@ This tool helps automate discovering someone's phone number by abusing password 
 ## Setup
 email2phonenumber was developed on Python 3.x
 
-You will need couple 3rd party libraries: BeautifulSoup and requests. These can be easily installed with pip
-
+You will need [poetry](https://python-poetry.org/) to be able to easily start developing.
+Then just run:
 ```
-pip3 install beautifulsoup4 requests
+poetry install
 ```
 
 ## Usage
 Scrape websites for phone number digits
 ```
-python3 email2phonenumber.py scrape -e target@email.com
+poetry run python3 email2phonenumber.py scrape -e target@email.com
 ```
 
 Generate a dictionary of valid phone numbers based on a phone number mask
 ```
-python3 email2phonenumber.py generate -m 555XXX1234 -o /tmp/dic.txt
+poetry run python3 email2phonenumber.py generate -m 555XXX1234 -o /tmp/dic.txt
 ```
 Find target's phone number by resetting passwords on websites that do not alert the target using a phone number mask and proxies to avoid captchas and other abuse protections
 ```
-python3 email2phonenumber.py bruteforce -m 555XXX1234 -e target@email.com -p /tmp/proxies.txt -q
+poetry run python3 email2phonenumber.py bruteforce -m 555XXX1234 -e target@email.com -p /tmp/proxies.txt -q
 ```
 
 ## Demo video
