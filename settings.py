@@ -3,7 +3,7 @@ import os
 
 class Settings:
     """
-    note: this file should be in root of the project, otherwise tweak root_dit
+    note: this file should be in root of the project, otherwise tweak root_dir
     """
     def __init__(self, parsed_args):
         self.verify_proxy = False
