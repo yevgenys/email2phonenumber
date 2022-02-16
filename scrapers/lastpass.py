@@ -43,9 +43,9 @@ class LastPass(Scraper):
         regex_output = re.search("We sent an SMS with a verification code to .*>(\+?)(.+([0-9]{2}))<\/strong>",
                                  response.text)
         if regex_output and regex_output.group(3):
-            last2 = regex_output.group(3)
+            last_two_digits = regex_output.group(3)
             self.logger.info(
-                self.colors.GREEN + "Lastpass reports that the last 2 digits are: " + last2 + self.colors.ENDC)
+                self.colors.GREEN + "Lastpass reports that the last 2 digits are: " + last_two_digits + self.colors.ENDC)
 
             if regex_output.group(1):
                 self.logger.info(self.colors.GREEN + "Lastpass reports a non US phone number" + self.colors.ENDC)

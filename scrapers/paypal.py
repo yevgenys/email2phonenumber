@@ -23,11 +23,10 @@ class PayPal(Scraper):
                                proxies=proxy,
                                verify=self.proxy_instance.verify_proxy)
 
-        _csrf = ""
-        regex_output = re.search('"_csrf":"([a-zA-Z0-9+\/]+={0,3})"', response.text)
-        if regex_output and regex_output.group(1):
-            _csrf = regex_output.group(1)
-        else:
+        
+        regex_output = re.search(r'"_csrf":"([a-zA-Z0-9+\/]+={0,3})"', response.text)
+        _csrf = regex_output.group(1) if regex_output and regex_output.group(1) else ""
+        if not _csrf:
             self.logger.warning(self.colors.YELLOW + "Paypal did not report any digits" + self.colors.ENDC)
             return
 
@@ -47,14 +46,17 @@ class PayPal(Scraper):
                                 verify=self.proxy_instance.verify_proxy)
 
         _csrf = _sessionID = jse = ""
-        regex_output = re.search('"_csrf":"([a-zA-Z0-9+\/]+={0,3})"', response.text)
-        if regex_output and regex_output.group(1): _csrf = regex_output.group(1)
+        regex_output = re.search(r'"_csrf":"([a-zA-Z0-9+\/]+={0,3})"', response.text)
+        if regex_output and regex_output.group(1): 
+            _csrf = regex_output.group(1)
 
-        regex_output = re.search('_sessionID" value="(\w+)"', response.text)
-        if regex_output and regex_output.group(1): _sessionID = regex_output.group(1)
+        regex_output = re.search(r'_sessionID" value="(\w+)"', response.text)
+        if regex_output and regex_output.group(1): 
+            _sessionID = regex_output.group(1)
 
-        regex_output = re.search('jse="(\w+)"', response.text)
-        if regex_output and regex_output.group(1): jse = regex_output.group(1)
+        regex_output = re.search(r'jse="(\w+)"', response.text)
+        if regex_output and regex_output.group(1): 
+            jse = regex_output.group(1)
 
         if not _csrf or not _sessionID or not jse:
             self.logger.warning(self.colors.YELLOW + "Paypal did not report any digits" + self.colors.ENDC)
@@ -81,9 +83,8 @@ class PayPal(Scraper):
                                 verify=self.proxy_instance.verify_proxy)
 
         regex_output = re.search('"clientInstanceId":"([a-zA-Z0-9-]+)"', response.text)
-        if regex_output and regex_output.group(1):
-            client_instance_id = regex_output.group(1)
-        else:
+        client_instance_id = regex_output.group(1) if regex_output and regex_output.group(1) else ""
+        if not client_instance_id:
             self.logger.warning(self.colors.YELLOW + "Paypal did not report any digits" + self.colors.ENDC)
             return
 
@@ -99,18 +100,19 @@ class PayPal(Scraper):
                                verify=self.proxy_instance.verify_proxy)
 
         last_digits = ""
-        regex_output = re.search("Mobile <span.+((\d+)\W+(\d+))<\/span>", response.text)
+        regex_output = re.search(r"Mobile <span.+((\d+)\W+(\d+))<\/span>", response.text)
         if regex_output and regex_output.group(3):
-            last4 = regex_output.group(3)
-            self.logger.info(self.colors.GREEN + "Pyapal reports that the last " + len(last4) + " digits are: " + last_digits + self.colors.ENDC)
+            last_digits = regex_output.group(3)
+            self.logger.info(self.colors.GREEN + "Pyapal reports that the last " + len(last_digits) + " digits are: " + last_digits + self.colors.ENDC)
 
             if regex_output.group(2):
-                firstDigit = regex_output.group(2)
-                self.logger.info(self.colors.GREEN + "Paypal reports that the first digit is: " + firstDigit + self.colors.ENDC)
+                first_digit = regex_output.group(2)
+                self.logger.info(self.colors.GREEN + "Paypal reports that the first digit is: " + first_digit + self.colors.ENDC)
 
             if regex_output.group(1):
                 self.logger.info(self.colors.GREEN + "Paypal reports that the length of the phone number (without country code) is " + len(
                     regex_output.group(1)) + " digits" + self.colors.ENDC)  # TODO: remove spaces
+                # TODO: remove spaces
 
         else:
             self.logger.warning(self.colors.YELLOW + "Paypal did not report any digits" + self.colors.ENDC)

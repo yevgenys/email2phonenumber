@@ -1,19 +1,20 @@
 [tool.poetry]
 name = "email2phonenumber"
-version = "0.1.0"
+version = "0.2.0-alpha.1"
 description = "Getting phonenumbers from email"
-authors = ["Eric Bode <eric.bode@globalorange.nl>"]
+authors = ["Eric Bode <eric.bode@foundries.io>"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
 beautifulsoup4 = "^4.10.0"
-requests = "^2.26.0"
-urllib3 = "^1.26.7"
-colorama = "^0.4.4"
+bs4 = "^0.0.1"
 certifi = "^2021.10.8"
-idna = "^3.3"
 chardet = "^4.0.0"
+colorama = "^0.4.4"
+idna = "^3.3"
+requests = "^2.26.0"
 soupsieve = "^2.3.1"
+urllib3 = "^1.26.7"
 
 [tool.poetry.dev-dependencies]
 

@@ -1,3 +1,4 @@
+import logging
 import os
 
 from suppliers.us_phonenumber_supplier import USPhoneNumberSupplier
@@ -5,6 +6,7 @@ from suppliers.us_phonenumber_supplier import USPhoneNumberSupplier
 
 class PhonenumberSupplier:
     def __init__(self, settings, user_agent_instance, proxy_instance, colors, mask):
+        self.logger = logging.getLogger(__name__)
         self.region = settings.region
         self.colors = colors
         self.map_region = {
@@ -27,7 +29,7 @@ class PhonenumberSupplier:
         if output_file:
             with open(output_file, 'w') as f:
                 f.write('\n'.join(possible_phone_numbers))
-            print(self.colors.GREEN + "Dictionary created successfully at " + os.path.realpath(f.name) + self.colors.ENDC)
+            self.logger.info(self.colors.GREEN + "Dictionary created successfully at " + os.path.realpath(f.name) + self.colors.ENDC)
         else:
-            print(self.colors.GREEN + "There are " + str(len(possible_phone_numbers)) + " possible numbers" + self.colors.ENDC)
-            print(self.colors.GREEN + str(possible_phone_numbers) + self.colors.ENDC)
+            self.logger.info(self.colors.GREEN + "There are " + str(len(possible_phone_numbers)) + " possible numbers" + self.colors.ENDC)
+            self.logger.info(self.colors.GREEN + str(possible_phone_numbers) + self.colors.ENDC)

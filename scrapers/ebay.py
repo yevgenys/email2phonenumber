@@ -24,9 +24,9 @@ class Ebay(Scraper):
             proxies=proxy,
             verify=self.proxy_instance.verify_proxy)
 
-        regex_output = re.search('value="(\w{60,})"', response.text)
+        regex_output = re.search(r'value="(\w{60,})"', response.text)
         if regex_output and regex_output.group(1):
-            reqinput = regex_output.group(1)
+            regex_input = regex_output.group(1)
         else:
             self.logger.warning(self.colors.YELLOW + "Ebay did not report any digits" + self.colors.ENDC)
             return
@@ -47,7 +47,7 @@ class Ebay(Scraper):
                  "&showSignInOTP=" +
                  "&signInUrl=" +
                  "&clientapptype=19" +
-                 "&reqinput=" + reqinput +
+                 "&reqinput=" + regex_input +
                  "&rmvhdr=false" +
                  "&gchru=&__HPAB_token_text__=" +
                  "&__HPAB_token_string__=" +
@@ -59,10 +59,10 @@ class Ebay(Scraper):
         regex_output = re.search("text you at ([0-9]{1})xx-xxx-xx([0-9]{2})", response.text)
         if regex_output:
             if regex_output.group(1):
-                first1 = regex_output.group(1)
-                self.logger.info(self.colors.GREEN + "Ebay reports that the first digit is: " + first1 + self.colors.ENDC)
+                first_digit = regex_output.group(1)
+                self.logger.info(self.colors.GREEN + "Ebay reports that the first digit is: " + first_digit + self.colors.ENDC)
             if regex_output.group(2):
-                last2 = regex_output.group(2)
-                self.logger.info(self.colors.GREEN + "Ebay reports that the last 2 digits are: " + last2 + self.colors.ENDC)
+                last_two_digits = regex_output.group(2)
+                self.logger.info(self.colors.GREEN + "Ebay reports that the last 2 digits are: " + last_two_digits + self.colors.ENDC)
         else:
             self.logger.warning(self.colors.YELLOW + "Ebay did not report any digits" + self.colors.ENDC)

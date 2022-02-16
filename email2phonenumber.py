@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import argparse
 import os
 import random
@@ -19,6 +18,15 @@ from scrapers.lastpass import LastPass
 from scrapers.paypal import PayPal
 from settings import Settings
 from suppliers.agnostic_supplier import AgnosticSupplier
+
+from itertools import product
+from bs4 import BeautifulSoup
+import logging
+
+# Basic configuration for logging
+logging.basicConfig(format='%(message)s', level=logging.INFO)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 requests.packages.urllib3.disable_warnings()
 
@@ -85,12 +93,14 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='An OSINT tool to find phone numbers associated to email addresses')
     subparsers = parser.add_subparsers(help='commands', dest='action')
     subparsers.required = True  # python3 compatibility, will generate slightly different error massage then python2
+    
     scrape_parser = subparsers.add_parser(Action.SCRAPE, help='scrape online services for phone number digits')
     scrape_parser.add_argument("-e", required=True, metavar="EMAIL", dest="email", help="victim's email address")
     scrape_parser.add_argument("-p", metavar="PROXYLIST", dest="proxies",
                                help="a file with a list of https proxies to use. Format: https://127.0.0.1:8080")
     scrape_parser.add_argument("-q", dest="quiet", action="store_true",
                                help="scrape services that do not alert the victim")
+    
     generator_parser = subparsers.add_parser(Action.GENERATE,
                                              help="generate all valid phone numbers based on NANPA's public records")
     generator_parser.add_argument("-m", required=True, metavar="MASK", dest="mask",
@@ -101,6 +111,7 @@ def parse_arguments():
     generator_parser.add_argument("-p", metavar="PROXYLIST", dest="proxies",
                                   help="a file with a list of https proxies to use. Format: https://127.0.0.1:8080")
     generator_parser.add_argument("-r", metavar="REGION", dest="region", help="region, default region is US")
+    
     bruteforce_parser = subparsers.add_parser(Action.BRUTE_FORCE,
                                               help='bruteforce using online services to find the phone number')
     bruteforce_parser.add_argument("-e", required=True, metavar="EMAIL", dest="email", help="victim's email address")
@@ -112,13 +123,11 @@ def parse_arguments():
     bruteforce_parser.add_argument("-q", dest="quiet", action="store_true",
                                    help="use services that do not alert the victim")
     bruteforce_parser.add_argument("-v", dest="verbose", action="store_true", help="verbose output")
+    
     return parser.parse_args()
 
 
 if __name__ == '__main__':
-    import logging
-    logging.basicConfig(level=logging.INFO)
-
     args = parse_arguments()
     settings = Settings(args)
     colors = Colors()
@@ -137,5 +146,3 @@ if __name__ == '__main__':
         phonenumber_supplier.dump_supplied_phones(args.file, possible_phone_numbers)
     elif args.action == Action.BRUTE_FORCE:
         bruteforce(args, colors, user_agents_instance, proxy_instance, settings)
-    # else:
-    #     exit(colors.RED + "action not recognized" + ENDC)

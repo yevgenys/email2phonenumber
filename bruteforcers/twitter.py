@@ -12,7 +12,8 @@ class Twitter(Bruteforcer):
         self.logger.info("Using Twitter to find victim's phone number...")
 
         possible_number_found = False
-
+        regex_email = r"[a-zA-Z0-9]\**[a-zA-Z0-9]@[a-zA-Z0-9]+\.[a-zA-Z0-9]+"
+        
         for phoneNumber in self.possible_phone_numbers:
             user_agent = self.user_agents_instance.next()  # Pick random user agents to help prevent captchas
             proxy = self.proxy_instance.get_random_proxy()
@@ -31,11 +32,12 @@ class Twitter(Bruteforcer):
                                             },
                                    proxies=proxy,
                                    verify=self.proxy_instance.verify_proxy)
-
-            regex_output = re.search('authenticity_token.+value="(\w+)">', response.text)
+            
+            regex_output = re.search(r'authenticity_token.+value="(\w+)">', response.text)
             authenticity_token = regex_output.group(1) if regex_output and regex_output.group(1) else ""
             if not authenticity_token:
-                self.logger.warning(self.colors.YELLOW + "Twitter did not display a masked email for number: " + phoneNumber + self.colors.ENDC)
+                if self.verbose:
+                    self.logger.warning(self.colors.YELLOW + "Twitter did not display a masked email for number: " + phoneNumber + self.colors.ENDC)
                 continue
 
             response = session.post("https://twitter.com/account/begin_password_reset",
@@ -72,7 +74,7 @@ class Twitter(Bruteforcer):
                                    proxies=proxy,
                                    verify=self.proxy_instance.verify_proxy)
 
-            regex_output = re.search('<strong .+>([a-zA-Z]+\*+@[a-zA-Z\*\.]+)<\/strong>', response.text)
+            regex_output = re.search(r'<strong .+>([a-zA-Z]+\*+@[a-zA-Z\*\.]+)<\/strong>', response.text)
             if regex_output and regex_output.group(1):
                 masked_email = regex_output.group(1)
                 if len(self.email) == len(masked_email) and self.email[0] == masked_email[0] and self.email[1] == \
@@ -81,13 +83,15 @@ class Twitter(Bruteforcer):
                                                                                                     masked_email.find(
                                                                                                         '@') + 1: masked_email.find(
                                                                                                         '@') + 2]:
-                    print(
+                    self.logger.info(
                         self.colors.GREEN + "Twitter found that the possible phone number for " + self.email + " is: " + phoneNumber + self.colors.ENDC)
                     possible_number_found = True
                 else:
-                    self.logger.warning(self.colors.YELLOW + "Twitter did not find a match for email: " + masked_email + " and number: " + phoneNumber + self.colors.ENDC)
+                    if self.verbose:
+                        self.logger.warning(self.colors.YELLOW + "Twitter did not find a match for email: " + masked_email + " and number: " + phoneNumber + self.colors.ENDC)
             else:
-                self.logger.warning(self.colors.YELLOW + "Twitter did not display a masked email for number: " + phoneNumber + self.colors.ENDC)
+                if self.verbose:
+                    self.logger.warning(self.colors.YELLOW + "Twitter did not display a masked email for number: " + phoneNumber + self.colors.ENDC)
                 continue
 
         if not possible_number_found:
